@@ -36,7 +36,7 @@ This document outlines the technical architecture for Phase 1 of GeoRoute Optimi
 ```mermaid
 graph TB
     subgraph "Client (Browser)"
-        A[Angular 21 SPA]
+        A[Next.js 15 SPA]
         B[ArcGIS Maps SDK]
     end
     
@@ -287,24 +287,19 @@ cd backend/GeoRoute.Api
 dotnet watch run --urls "https://localhost:7001"
 
 # Terminal 2: Frontend
-cd frontend
-npm start
+# Terminal 2: Frontend
+# (Running in root)
+npm run dev
 ```
 
 ### 7.2 API Configuration
 
 ```typescript
-// Angular environment.ts
-export const environment = {
-  production: false,
-  apiUrl: 'https://localhost:7001/api'
-};
+// .env.local
+NEXT_PUBLIC_API_URL=https://localhost:7001/api
 
-// Angular environment.prod.ts
-export const environment = {
-  production: true,
-  apiUrl: 'https://georoute-func.azurewebsites.net/api'
-};
+// .env.production
+NEXT_PUBLIC_API_URL=https://georoute-func.azurewebsites.net/api
 ```
 
 ---
@@ -325,7 +320,8 @@ export const environment = {
 │   │   ├── PoiLayer.tsx          # POI graphics layer
 │   │   └── RouteLayer.tsx        # Route polyline layer
 │   ├── Sidebar/
-│   │   ├── PoiList.tsx           # Draggable POI list
+│   │   ├── PoiList.tsx           # Draggable list for reordering POIs
+│   │   ├── AddressSearch.tsx     # Autocomplete search with area bias
 │   │   └── Metrics.tsx           # Distance/time display
 │   └── Export/
 │       └── ExportButton.tsx      # PDF/iCal export
@@ -352,6 +348,7 @@ import { useEffect, useRef } from 'react';
 import Map from '@arcgis/core/Map';
 import MapView from '@arcgis/core/views/MapView';
 import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer';
+import Search from '@arcgis/core/widgets/Search';
 
 export function MapViewComponent() {
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -368,6 +365,28 @@ export function MapViewComponent() {
       map,
       center: [-115.5708, 51.1784], // Banff default
       zoom: 10
+    });
+
+    // Address Search with Area Limit
+    const searchWidget = new Search({
+      view,
+      locationEnabled: false,
+      includeDefaultSources: false,
+      sources: [{
+        url: "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer",
+        singleLineFieldName: "SingleLine",
+        name: "ArcGIS World Geocoding Service",
+        placeholder: "Search for a place...",
+        filter: {
+          geometry: view.extent // Bias search to current map view
+        }
+      }]
+    });
+    view.ui.add(searchWidget, "top-right");
+
+    // Click to Pin
+    view.on("click", (event) => {
+      // Logic to add POI at event.mapPoint
     });
     
     return () => view.destroy();
@@ -406,13 +425,20 @@ interface AppState {
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant F as Angular Frontend
+    participant F as Next.js Frontend
     participant A as ArcGIS SDK
     participant B as Backend API
     participant N as NTS Library
     
-    U->>F: Add POIs (click/search)
-    F->>A: Add graphics to map
+    U->>F: Search Address (Area Restricted)
+    F->>A: Query Geocode Service
+    A-->>F: Return location
+    F->>A: Add Pin to Map
+    U->>F: Click Map to Pin
+    F->>A: Add Pin at clicked location
+    
+    U->>F: Reorder POIs (Drag List)
+    F->>F: Update local state sequence
     
     rect rgb(240, 248, 255)
     Note over U,N: Step 1: Find Best Stay Area
@@ -460,6 +486,8 @@ sequenceDiagram
 ### Frontend
 - [ ] Install `@arcgis/core` package
 - [ ] Create map component with basemap
+- [ ] Implement Address Search widget (limited to area)
+- [ ] Implement Map Click to Add Pin
 - [ ] Implement POI add/remove/toggle
 - [ ] Create draggable sidebar POI list
 - [ ] Implement route visualization
