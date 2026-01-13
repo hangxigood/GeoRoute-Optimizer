@@ -25,7 +25,7 @@ This document outlines the technical architecture for Phase 1 of GeoRoute Optimi
 | **Geospatial** | NetTopologySuite (NTS) |
 | **PDF Export** | QuestPDF |
 | **Deployment** | Azure Functions (Consumption Plan) |
-| **State** | URL Query Strings (shareable, no database) |
+| **State Management** | **Zustand** (Client store) + **URL Search Params** (Persistence/Sharing) |
 
 ---
 
@@ -330,8 +330,9 @@ export const environment = {
 │   └── Export/
 │       └── ExportButton.tsx      # PDF/iCal export
 ├── hooks/
-│   ├── useRouteOptimizer.ts
-│   └── useUrlState.ts            # Sync state with URL query strings
+│   └── useRouteOptimizer.ts
+├── store/
+│   └── useStore.ts           # Zustand store (syncs to URL)
 ├── lib/
 │   └── arcgis-config.ts
 └── types/
@@ -374,6 +375,28 @@ export function MapViewComponent() {
 
   return <div ref={mapDiv} className="w-full h-screen" />;
 }
+```
+
+### 8.3 State Management (Zustand + URL Sync)
+
+We use **Zustand** for high-performance, transient state updates (dragging pins, toggling POIs) and synchronize critical state to the URL query string for shareability.
+
+```typescript
+// store/useStore.ts
+interface AppState {
+  points: PointOfInterest[];
+  lodgingZone: LodgingZone | null;
+  route: OptimizedRoute | null;
+  
+  // Actions
+  addPoint: (poi: PointOfInterest) => void;
+  removePoint: (id: string) => void;
+  reorderPoints: (fromIndex: number, toIndex: number) => void;
+  setRoute: (route: OptimizedRoute) => void;
+}
+
+// Middleware or useEffect will handle: 
+// ZIP(State) <-> Base64(URL Query Param)
 ```
 
 ---
