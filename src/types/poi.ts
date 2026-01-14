@@ -23,18 +23,15 @@ export interface LodgingZone {
 // Route mode options
 export type RouteMode = 'loop' | 'one-way';
 
+// Backend response - only contains sequence and mode
 export interface OptimizedRoute {
     sequence: string[]; // List of POI IDs
-    legs: RouteLeg[];
-    totalDistanceKm: number;
-    totalDurationMin: number;
     routeMode: RouteMode;
 }
 
-export interface RouteLeg {
-    from: string; // ID or "start"
-    to: string;   // ID or "start"
-    distanceKm: number;
-    durationMin: number;
+// Frontend-calculated metrics from ArcGIS Route Service
+export interface RouteMetrics {
+    totalDistanceKm: number;
+    totalDurationMin: number;
 }
 

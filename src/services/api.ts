@@ -59,6 +59,7 @@ export const routeApi = {
                     lng: p.lng,
                 })),
                 startLocation: startLocation ? {
+                    id: startLocation.id,
                     name: startLocation.name,
                     lat: startLocation.lat,
                     lng: startLocation.lng,
@@ -101,6 +102,7 @@ export const exportApi = {
                     lng: p.lng,
                 })),
                 startLocation: startLocation ? {
+                    id: startLocation.id,
                     name: startLocation.name,
                     lat: startLocation.lat,
                     lng: startLocation.lng,
