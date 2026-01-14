@@ -3,7 +3,7 @@
 import { useStore } from '@/store/useStore';
 
 export function Metrics() {
-    const { route, points, startLocation, lodgingZone } = useStore();
+    const { route, routeMetrics, lodgingZone } = useStore();
 
     if (!route && !lodgingZone) {
         return null;
@@ -44,7 +44,7 @@ export function Metrics() {
             )}
 
             {/* Route Metrics */}
-            {route && (
+            {route && routeMetrics && (
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
                         <span>🗺️</span> Route Summary
@@ -54,41 +54,21 @@ export function Metrics() {
                     <div className="grid grid-cols-2 gap-3 mb-4">
                         <div className="text-center p-3 bg-white rounded-lg">
                             <p className="text-2xl font-bold text-blue-600">
-                                {route.totalDistanceKm.toFixed(1)}
+                                {routeMetrics.totalDistanceKm.toFixed(1)}
                             </p>
                             <p className="text-xs text-gray-500 uppercase">km total</p>
                         </div>
                         <div className="text-center p-3 bg-white rounded-lg">
                             <p className="text-2xl font-bold text-blue-600">
-                                {formatDuration(route.totalDurationMin)}
+                                {formatDuration(routeMetrics.totalDurationMin)}
                             </p>
                             <p className="text-xs text-gray-500 uppercase">total time</p>
                         </div>
                     </div>
 
-                    {/* Leg breakdown */}
-                    {route.legs.length > 0 && (
-                        <details className="group">
-                            <summary className="cursor-pointer text-sm text-blue-700 hover:text-blue-800 flex items-center gap-1">
-                                <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                </svg>
-                                View leg details
-                            </summary>
-                            <ul className="mt-2 space-y-1 text-sm">
-                                {route.legs.map((leg, index) => (
-                                    <li key={index} className="flex justify-between py-1 border-b border-blue-100 last:border-0">
-                                        <span className="text-gray-600">
-                                            {getLegLabel(leg.from, leg.to, points, startLocation)}
-                                        </span>
-                                        <span className="text-gray-900 font-medium">
-                                            {leg.distanceKm.toFixed(1)}km · {leg.durationMin}min
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </details>
-                    )}
+                    <p className="text-xs text-gray-500 italic">
+                        ✓ Real road distances from ArcGIS
+                    </p>
 
                     {route.routeMode === 'loop' && (
                         <p className="mt-2 text-xs text-blue-600 flex items-center gap-1">
@@ -102,31 +82,27 @@ export function Metrics() {
                     )}
                 </div>
             )}
+
+            {/* Show loading state while metrics are being calculated */}
+            {route && !routeMetrics && (
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-600 flex items-center gap-2">
+                        <span className="animate-spin">⏳</span> Calculating route metrics...
+                    </p>
+                </div>
+            )}
         </div>
     );
 }
 
 function formatDuration(minutes: number): string {
     if (minutes < 60) {
-        return `${minutes}min`;
+        return `${Math.round(minutes)}min`;
     }
     const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
+    const mins = Math.round(minutes % 60);
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
-function getLegLabel(
-    fromId: string,
-    toId: string,
-    points: { id: string; name: string }[],
-    startLocation: { name: string } | null
-): string {
-    const getLabel = (id: string) => {
-        if (id === 'start' || id === 'hotel') return startLocation?.name || 'Start';
-        const poi = points.find((p) => p.id === id);
-        return poi?.name || id;
-    };
-    return `${getLabel(fromId)} → ${getLabel(toId)}`;
-}
-
 export default Metrics;
+

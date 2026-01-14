@@ -41,9 +41,6 @@ export default function Sidebar({ isOpen, mapView, onFindLodging, onOptimizeRout
                         Search for a place
                     </label>
                     <AddressSearch mapView={mapView} />
-                    <p className="mt-2 text-xs text-gray-500">
-                        Or click anywhere on the map to add a point
-                    </p>
                 </div>
 
                 {/* Scrollable content */}
