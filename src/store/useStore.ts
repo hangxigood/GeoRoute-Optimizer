@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { PointOfInterest, LodgingZone, OptimizedRoute } from '@/types/poi';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7001/api';
+import { api } from '@/services/api';
 
 interface AppState {
     // State
@@ -91,7 +90,7 @@ export const useStore = create<AppState>((set, get) => ({
         }),
 
     // Async Actions
-    calculateLodgingZone: async (bufferRadiusKm = 15) => {
+    calculateLodgingZone: async (bufferRadiusKm = 5) => {
         const { points } = get();
 
         if (points.length < 2) {
@@ -102,25 +101,7 @@ export const useStore = create<AppState>((set, get) => ({
         set({ isLoading: true, error: null });
 
         try {
-            const response = await fetch(`${API_URL}/lodging/calculate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    points: points.map(p => ({
-                        id: p.id,
-                        name: p.name,
-                        lat: p.lat,
-                        lng: p.lng,
-                    })),
-                    bufferRadiusKm,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Backend API returned ${response.status}`);
-            }
-
-            const zone: LodgingZone = await response.json();
+            const zone = await api.lodging.calculate(points, bufferRadiusKm);
             set({ lodgingZone: zone, isLoading: false });
             return zone;
         } catch (err) {
@@ -149,31 +130,7 @@ export const useStore = create<AppState>((set, get) => ({
         set({ isLoading: true, error: null });
 
         try {
-            const response = await fetch(`${API_URL}/route/optimize`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    points: points.map(p => ({
-                        id: p.id,
-                        name: p.name,
-                        lat: p.lat,
-                        lng: p.lng,
-                    })),
-                    hotel: hotel ? {
-                        name: hotel.name,
-                        lat: hotel.lat,
-                        lng: hotel.lng,
-                    } : null,
-                    optimizeSequence,
-                    manualSequence: optimizeSequence ? null : points.map(p => p.id),
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Backend API returned ${response.status}`);
-            }
-
-            const route: OptimizedRoute = await response.json();
+            const route = await api.route.optimize(points, hotel, optimizeSequence);
             set({ route, isLoading: false });
             return route;
         } catch (err) {

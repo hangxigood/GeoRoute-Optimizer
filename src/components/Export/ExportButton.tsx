@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useStore } from '@/store/useStore';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7001/api';
+import { api } from '@/services/api';
 
 export function ExportButton() {
     const { route, points, hotel, isLoading } = useStore();
@@ -17,31 +16,8 @@ export function ExportButton() {
         setExportError(null);
 
         try {
-            const response = await fetch(`${API_URL}/export/pdf`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    route,
-                    points: points.map(p => ({
-                        id: p.id,
-                        name: p.name,
-                        lat: p.lat,
-                        lng: p.lng,
-                    })),
-                    hotel: hotel ? {
-                        name: hotel.name,
-                        lat: hotel.lat,
-                        lng: hotel.lng,
-                    } : null,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Backend API returned ${response.status}`);
-            }
-
-            // Get PDF blob from response
-            const blob = await response.blob();
+            // Get PDF blob from API
+            const blob = await api.export.exportPdf(route, points, hotel);
 
             // Create download link
             const url = URL.createObjectURL(blob);
