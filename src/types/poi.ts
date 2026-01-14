@@ -20,17 +20,21 @@ export interface LodgingZone {
     };
 }
 
+// Route mode options
+export type RouteMode = 'loop' | 'one-way';
+
 export interface OptimizedRoute {
     sequence: string[]; // List of POI IDs
     legs: RouteLeg[];
     totalDistanceKm: number;
     totalDurationMin: number;
-    isRoundTrip: boolean;
+    routeMode: RouteMode;
 }
 
 export interface RouteLeg {
-    from: string; // ID or "hotel"
-    to: string; // ID or "hotel"
+    from: string; // ID or "start"
+    to: string;   // ID or "start"
     distanceKm: number;
     durationMin: number;
 }
+

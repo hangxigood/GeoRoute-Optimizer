@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import type { PointOfInterest, LodgingZone, OptimizedRoute } from '@/types/poi';
+import type { PointOfInterest, LodgingZone, OptimizedRoute, RouteMode } from '@/types/poi';
 import { api } from '@/services/api';
 
 interface AppState {
     // State
     points: PointOfInterest[];
-    hotel: PointOfInterest | null;
+    startLocation: PointOfInterest | null;
+    routeMode: RouteMode;
     lodgingZone: LodgingZone | null;
     route: OptimizedRoute | null;
     isLoading: boolean;
@@ -17,7 +18,8 @@ interface AppState {
     updatePoint: (id: string, updates: Partial<PointOfInterest>) => void;
     setPoints: (points: PointOfInterest[]) => void;
     reorderPoints: (fromIndex: number, toIndex: number) => void;
-    setHotel: (hotel: PointOfInterest | null) => void;
+    setStartLocation: (location: PointOfInterest | null) => void;
+    setRouteMode: (mode: RouteMode) => void;
     setLodgingZone: (zone: LodgingZone | null) => void;
     setRoute: (route: OptimizedRoute | null) => void;
     setLoading: (isLoading: boolean) => void;
@@ -32,7 +34,8 @@ interface AppState {
 export const useStore = create<AppState>((set, get) => ({
     // Initial state
     points: [],
-    hotel: null,
+    startLocation: null,
+    routeMode: 'loop',
     lodgingZone: null,
     route: null,
     isLoading: false,
@@ -70,7 +73,9 @@ export const useStore = create<AppState>((set, get) => ({
             return { points: newPoints, route: null };
         }),
 
-    setHotel: (hotel) => set({ hotel, route: null }),
+    setStartLocation: (location) => set({ startLocation: location, route: null }),
+
+    setRouteMode: (mode) => set({ routeMode: mode, route: null }),
 
     setLodgingZone: (zone) => set({ lodgingZone: zone }),
 
@@ -83,7 +88,8 @@ export const useStore = create<AppState>((set, get) => ({
     clearAll: () =>
         set({
             points: [],
-            hotel: null,
+            startLocation: null,
+            routeMode: 'loop',
             lodgingZone: null,
             route: null,
             error: null,
@@ -115,22 +121,22 @@ export const useStore = create<AppState>((set, get) => ({
     },
 
     optimizeRoute: async (optimizeSequence = true) => {
-        const { points, hotel } = get();
+        const { points, startLocation, routeMode } = get();
 
         if (points.length < 1) {
             set({ error: 'Need at least 1 point to calculate route' });
             return null;
         }
 
-        if (!hotel && optimizeSequence) {
-            set({ error: 'Please set a hotel location first' });
+        if (!startLocation && optimizeSequence) {
+            set({ error: 'Please set a start location first' });
             return null;
         }
 
         set({ isLoading: true, error: null });
 
         try {
-            const route = await api.route.optimize(points, hotel, optimizeSequence);
+            const route = await api.route.optimize(points, startLocation, routeMode, optimizeSequence);
             set({ route, isLoading: false });
             return route;
         } catch (err) {

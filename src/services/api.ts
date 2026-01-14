@@ -1,4 +1,4 @@
-import type { PointOfInterest, LodgingZone, OptimizedRoute } from '@/types/poi';
+import type { PointOfInterest, LodgingZone, OptimizedRoute, RouteMode } from '@/types/poi';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7001/api';
 
@@ -40,11 +40,12 @@ export const lodgingApi = {
  */
 export const routeApi = {
     /**
-     * Optimize route sequence for given POIs and hotel
+     * Optimize route sequence for given POIs and start location
      */
     optimize: async (
         points: PointOfInterest[],
-        hotel: PointOfInterest | null,
+        startLocation: PointOfInterest | null,
+        routeMode: RouteMode = 'loop',
         optimizeSequence: boolean = true
     ): Promise<OptimizedRoute> => {
         const response = await fetch(`${API_URL}/route/optimize`, {
@@ -57,11 +58,12 @@ export const routeApi = {
                     lat: p.lat,
                     lng: p.lng,
                 })),
-                hotel: hotel ? {
-                    name: hotel.name,
-                    lat: hotel.lat,
-                    lng: hotel.lng,
+                startLocation: startLocation ? {
+                    name: startLocation.name,
+                    lat: startLocation.lat,
+                    lng: startLocation.lng,
                 } : null,
+                routeMode,
                 optimizeSequence,
                 manualSequence: optimizeSequence ? null : points.map(p => p.id),
             }),
@@ -85,7 +87,7 @@ export const exportApi = {
     exportPdf: async (
         route: OptimizedRoute,
         points: PointOfInterest[],
-        hotel: PointOfInterest | null
+        startLocation: PointOfInterest | null
     ): Promise<Blob> => {
         const response = await fetch(`${API_URL}/export/pdf`, {
             method: 'POST',
@@ -98,10 +100,10 @@ export const exportApi = {
                     lat: p.lat,
                     lng: p.lng,
                 })),
-                hotel: hotel ? {
-                    name: hotel.name,
-                    lat: hotel.lat,
-                    lng: hotel.lng,
+                startLocation: startLocation ? {
+                    name: startLocation.name,
+                    lat: startLocation.lat,
+                    lng: startLocation.lng,
                 } : null,
             }),
         });
