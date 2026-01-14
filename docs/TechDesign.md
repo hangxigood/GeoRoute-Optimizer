@@ -167,21 +167,13 @@ The key architectural decision is a **shared .NET Core library** (`GeoRoute.Core
 ```json
 {
   "sequence": ["p1", "p3", "p2"],
-  "legs": [
-    { "from": "start", "to": "p1", "distanceKm": 2.5, "durationMin": 5 },
-    { "from": "p1", "to": "p3", "distanceKm": 45.2, "durationMin": 52 },
-    { "from": "p3", "to": "p2", "distanceKm": 12.1, "durationMin": 15 },
-    { "from": "p2", "to": "start", "distanceKm": 38.0, "durationMin": 42 }
-  ],
-  "totalDistanceKm": 97.8,
-  "totalDurationMin": 114,
   "routeMode": "loop"
 }
 ```
 
 > [!NOTE]
-> - In `"one-way"` mode, the final leg (`"from": "p2", "to": "start"`) is omitted.
-> - `"from": "start"` represents the user's Start Location (Hotel, Airport, etc.).
+> - The backend optimizes the **sequence** only.
+> - The frontend passes this sequence to ArcGIS Route Service to calculate real-world distances and travel times.
 
 ---
 
@@ -205,16 +197,8 @@ public class RouteOptimizerService
         // 2. Improve with 2-opt swaps
         route = TwoOptImprove(route);
         
-        // 3. Calculate travel legs
-        var legs = CalculateLegs(route, mode);
-        
-        // 4. For One-Way mode, omit return leg to start
-        if (mode == RouteMode.OneWay)
-        {
-            legs = legs.Where(l => l.To != "start").ToList();
-        }
-        
-        return new OptimizedRoute(route, legs, mode);
+        // 3. Return sequence (Frontend calculates metrics via ArcGIS)
+        return new OptimizedRoute(route, mode);
     }
 }
 
@@ -483,10 +467,12 @@ sequenceDiagram
     U->>F: Select Route Mode (Loop or One-Way)
     U->>F: Click "Optimize My Day"
     F->>B: POST /api/route/optimize (with startLocation + routeMode)
-    B->>B: TSP optimization (respects mode)
-    B-->>F: OptimizedRoute (loop or one-way path)
+    B->>B: TSP optimization (sequence only)
+    B-->>F: Optimized Sequence
+    F->>A: Query Route Service (using sequence)
+    A-->>F: Return Route Geometry & Metrics
     F->>A: Draw route polyline
-    F->>F: Update sidebar metrics
+    F->>F: Update sidebar metrics (from ArcGIS)
     end
     
     rect rgb(248, 255, 240)
