@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { PointOfInterest, LodgingZone, OptimizedRoute } from '@/types/poi';
-import { calculateCentroidClientSide, calculateRouteClientSide } from '@/lib/geoUtils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7001/api';
 
@@ -115,18 +114,19 @@ export const useStore = create<AppState>((set, get) => ({
             });
 
             if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
+                throw new Error(`Backend API returned ${response.status}`);
             }
 
             const zone: LodgingZone = await response.json();
             set({ lodgingZone: zone, isLoading: false });
             return zone;
         } catch (err) {
-            // Fallback: calculate centroid client-side
-            console.warn('Backend unavailable, using client-side calculation:', err);
-            const clientZone = calculateCentroidClientSide(points, bufferRadiusKm);
-            set({ lodgingZone: clientZone, isLoading: false });
-            return clientZone;
+            const errorMessage = err instanceof Error ? err.message : 'Failed to calculate lodging zone';
+            set({
+                error: `Backend unavailable: ${errorMessage}. Please start the backend server.`,
+                isLoading: false
+            });
+            return null;
         }
     },
 
@@ -167,18 +167,19 @@ export const useStore = create<AppState>((set, get) => ({
             });
 
             if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
+                throw new Error(`Backend API returned ${response.status}`);
             }
 
             const route: OptimizedRoute = await response.json();
             set({ route, isLoading: false });
             return route;
         } catch (err) {
-            // Fallback: use simple nearest neighbor client-side
-            console.warn('Backend unavailable, using client-side calculation:', err);
-            const clientRoute = calculateRouteClientSide(points, hotel);
-            set({ route: clientRoute, isLoading: false });
-            return clientRoute;
+            const errorMessage = err instanceof Error ? err.message : 'Failed to optimize route';
+            set({
+                error: `Backend unavailable: ${errorMessage}. Please start the backend server.`,
+                isLoading: false
+            });
+            return null;
         }
     }
 }));
