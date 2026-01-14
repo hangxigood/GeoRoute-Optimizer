@@ -4,6 +4,7 @@ import { useStore } from '@/store/useStore';
 import PoiList from '@/components/Sidebar/PoiList';
 import Metrics from '@/components/Sidebar/Metrics';
 import ActionButtons from '@/components/Sidebar/ActionButtons';
+import RouteModeToggle from '@/components/Sidebar/RouteModeToggle';
 
 const AddressSearch = dynamic(
     () => import('@/components/Sidebar/AddressSearch'),
@@ -57,6 +58,9 @@ export default function Sidebar({ isOpen, mapView, onFindLodging, onOptimizeRout
 
                     {/* POI List */}
                     <PoiList />
+
+                    {/* Route Mode Toggle */}
+                    <RouteModeToggle />
 
                     {/* Metrics */}
                     <Metrics />

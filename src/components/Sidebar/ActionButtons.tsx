@@ -7,7 +7,7 @@ interface ActionButtonsProps {
 }
 
 export default function ActionButtons({ onFindLodging, onOptimizeRoute }: ActionButtonsProps) {
-    const { points, hotel, isLoading, clearAll } = useStore();
+    const { points, startLocation, isLoading, clearAll } = useStore();
 
     const canCalculateLodging = points.length >= 2;
     const canOptimizeRoute = points.length >= 1;
@@ -54,7 +54,7 @@ export default function ActionButtons({ onFindLodging, onOptimizeRoute }: Action
             <ExportButton />
 
             {/* Clear all */}
-            {(points.length > 0 || hotel) && (
+            {(points.length > 0 || startLocation) && (
                 <button
                     onClick={clearAll}
                     className="w-full py-2 text-sm text-gray-500 hover:text-red-500 transition-colors"

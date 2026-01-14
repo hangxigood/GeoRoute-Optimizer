@@ -18,7 +18,7 @@ interface MapViewComponentProps {
 
 export function MapViewComponent({ onMapReady }: MapViewComponentProps) {
     const mapDiv = useRef<HTMLDivElement>(null);
-    const { points, hotel, route, lodgingZone, addPoint } = useStore();
+    const { points, startLocation, route, lodgingZone, addPoint } = useStore();
 
     // Initialize map and layers
     const { viewRef, layersRef } = useMapInitialization(mapDiv, onMapReady);
@@ -26,11 +26,11 @@ export function MapViewComponent({ onMapReady }: MapViewComponentProps) {
     // Handle map click to add POI
     useMapClickHandler(viewRef, points.length, addPoint);
 
-    // Sync POI graphics (including hotel)
+    // Sync POI graphics (including start location)
     usePoiLayer(
         { current: layersRef.current?.poiLayer || null },
         points,
-        hotel
+        startLocation
     );
 
     // Sync route graphics
@@ -38,7 +38,7 @@ export function MapViewComponent({ onMapReady }: MapViewComponentProps) {
         { current: layersRef.current?.routeLayer || null },
         route,
         points,
-        hotel
+        startLocation
     );
 
     // Sync lodging zone graphics

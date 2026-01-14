@@ -46,39 +46,39 @@ export function createPoiGraphic(poi: PointOfInterest, index: number): Graphic[]
 }
 
 /**
- * Creates a hotel marker graphic with icon label
+ * Creates a start location marker graphic with icon label
  */
-export function createHotelGraphic(hotel: PointOfInterest): Graphic[] {
-    const hotelPoint = new Point({
-        longitude: hotel.lng,
-        latitude: hotel.lat,
+export function createStartLocationGraphic(startLocation: PointOfInterest): Graphic[] {
+    const startPoint = new Point({
+        longitude: startLocation.lng,
+        latitude: startLocation.lat,
     });
 
-    const hotelGraphic = new Graphic({
-        geometry: hotelPoint,
+    const startGraphic = new Graphic({
+        geometry: startPoint,
         symbol: new SimpleMarkerSymbol({
             color: HOTEL_SYMBOL.color,
             size: HOTEL_SYMBOL.size,
             outline: HOTEL_SYMBOL.outline,
         }),
-        attributes: { id: hotel.id, name: hotel.name, isHotel: true },
+        attributes: { id: startLocation.id, name: startLocation.name, isStartLocation: true },
         popupTemplate: {
-            title: hotel.name,
-            content: 'Your Hotel',
+            title: startLocation.name,
+            content: 'Start Location',
         },
     });
 
-    const hotelLabel = new Graphic({
-        geometry: hotelPoint,
+    const startLabel = new Graphic({
+        geometry: startPoint,
         symbol: new TextSymbol({
             color: 'white',
-            text: '🏨',
+            text: '📍',
             font: { size: 10 },
             yoffset: 0,
         }),
     });
 
-    return [hotelGraphic, hotelLabel];
+    return [startGraphic, startLabel];
 }
 
 /**

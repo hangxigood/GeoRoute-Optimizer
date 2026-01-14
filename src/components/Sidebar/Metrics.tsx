@@ -3,7 +3,7 @@
 import { useStore } from '@/store/useStore';
 
 export function Metrics() {
-    const { route, points, hotel, lodgingZone } = useStore();
+    const { route, points, startLocation, lodgingZone } = useStore();
 
     if (!route && !lodgingZone) {
         return null;
@@ -79,7 +79,7 @@ export function Metrics() {
                                 {route.legs.map((leg, index) => (
                                     <li key={index} className="flex justify-between py-1 border-b border-blue-100 last:border-0">
                                         <span className="text-gray-600">
-                                            {getLegLabel(leg.from, leg.to, points, hotel)}
+                                            {getLegLabel(leg.from, leg.to, points, startLocation)}
                                         </span>
                                         <span className="text-gray-900 font-medium">
                                             {leg.distanceKm.toFixed(1)}km · {leg.durationMin}min
@@ -90,9 +90,14 @@ export function Metrics() {
                         </details>
                     )}
 
-                    {route.isRoundTrip && (
+                    {route.routeMode === 'loop' && (
                         <p className="mt-2 text-xs text-blue-600 flex items-center gap-1">
-                            <span>🔄</span> Round trip (returns to hotel)
+                            <span>🔄</span> Loop trip (returns to start)
+                        </p>
+                    )}
+                    {route.routeMode === 'one-way' && (
+                        <p className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                            <span>➡️</span> One-way trip
                         </p>
                     )}
                 </div>
@@ -114,10 +119,10 @@ function getLegLabel(
     fromId: string,
     toId: string,
     points: { id: string; name: string }[],
-    hotel: { name: string } | null
+    startLocation: { name: string } | null
 ): string {
     const getLabel = (id: string) => {
-        if (id === 'hotel') return hotel?.name || 'Hotel';
+        if (id === 'start' || id === 'hotel') return startLocation?.name || 'Start';
         const poi = points.find((p) => p.id === id);
         return poi?.name || id;
     };

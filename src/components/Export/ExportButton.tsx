@@ -5,7 +5,7 @@ import { useStore } from '@/store/useStore';
 import { api } from '@/services/api';
 
 export function ExportButton() {
-    const { route, points, hotel, isLoading } = useStore();
+    const { route, points, startLocation, isLoading } = useStore();
     const [isExporting, setIsExporting] = useState(false);
     const [exportError, setExportError] = useState<string | null>(null);
 
@@ -17,7 +17,7 @@ export function ExportButton() {
 
         try {
             // Get PDF blob from API
-            const blob = await api.export.exportPdf(route, points, hotel);
+            const blob = await api.export.exportPdf(route, points, startLocation);
 
             // Create download link
             const url = URL.createObjectURL(blob);

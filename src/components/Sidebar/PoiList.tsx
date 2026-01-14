@@ -5,13 +5,13 @@ import type { PointOfInterest } from '@/types/poi';
 import { Reorder, useDragControls } from 'framer-motion';
 
 function PoiListItem({ poi, index }: { poi: PointOfInterest; index: number }) {
-    const { removePoint, setHotel } = useStore();
+    const { removePoint, setStartLocation } = useStore();
     const dragControls = useDragControls();
 
-    const handleSetAsHotel = (e: React.MouseEvent) => {
+    const handleSetAsStart = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent drag start if clicked carelessly
         removePoint(poi.id);
-        setHotel({ ...poi, isHotel: true });
+        setStartLocation({ ...poi, isHotel: true });
     };
 
     return (
@@ -52,11 +52,11 @@ function PoiListItem({ poi, index }: { poi: PointOfInterest; index: number }) {
                 {/* Actions */}
                 <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                        onClick={handleSetAsHotel}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                        title="Set as hotel"
+                        onClick={handleSetAsStart}
+                        className="p-1.5 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded transition-colors"
+                        title="Set as start location"
                     >
-                        🏨
+                        📍
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); removePoint(poi.id); }}
@@ -74,13 +74,13 @@ function PoiListItem({ poi, index }: { poi: PointOfInterest; index: number }) {
 }
 
 export function PoiList() {
-    const { points, hotel, setHotel, setPoints } = useStore();
+    const { points, startLocation, setStartLocation, setPoints } = useStore();
 
-    const handleClearHotel = () => {
-        setHotel(null);
+    const handleClearStartLocation = () => {
+        setStartLocation(null);
     };
 
-    if (points.length === 0 && !hotel) {
+    if (points.length === 0 && !startLocation) {
         return (
             <div className="text-center py-8 text-gray-500">
                 <div className="text-4xl mb-2">📍</div>
@@ -91,26 +91,26 @@ export function PoiList() {
 
     return (
         <div className="space-y-3">
-            {/* Hotel section */}
-            {hotel && (
+            {/* Start Location section */}
+            {startLocation && (
                 <div className="mb-4">
                     <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                        Your Hotel
+                        Start Location
                     </h4>
-                    <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <div className="flex-shrink-0 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm">
-                            🏨
+                    <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm">
+                            📍
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{hotel.name}</p>
+                            <p className="font-medium text-gray-900 truncate">{startLocation.name}</p>
                             <p className="text-xs text-gray-500">
-                                {hotel.lat.toFixed(4)}, {hotel.lng.toFixed(4)}
+                                {startLocation.lat.toFixed(4)}, {startLocation.lng.toFixed(4)}
                             </p>
                         </div>
                         <button
-                            onClick={handleClearHotel}
+                            onClick={handleClearStartLocation}
                             className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-100 rounded transition-colors"
-                            title="Remove hotel"
+                            title="Remove start location"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

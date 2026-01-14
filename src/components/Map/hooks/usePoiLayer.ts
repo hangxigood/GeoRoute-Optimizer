@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer';
 import type { PointOfInterest } from '@/types/poi';
-import { createPoiGraphic, createHotelGraphic } from '../utils/graphicCreators';
+import { createPoiGraphic, createStartLocationGraphic } from '../utils/graphicCreators';
 
 export function usePoiLayer(
     layerRef: React.RefObject<GraphicsLayer | null>,
     points: PointOfInterest[],
-    hotel: PointOfInterest | null
+    startLocation: PointOfInterest | null
 ) {
     useEffect(() => {
         const layer = layerRef.current;
@@ -20,10 +20,11 @@ export function usePoiLayer(
             graphics.forEach((graphic) => layer.add(graphic));
         });
 
-        // Add hotel marker if set
-        if (hotel) {
-            const hotelGraphics = createHotelGraphic(hotel);
-            hotelGraphics.forEach((graphic) => layer.add(graphic));
+        // Add start location marker if set
+        if (startLocation) {
+            const startGraphics = createStartLocationGraphic(startLocation);
+            startGraphics.forEach((graphic) => layer.add(graphic));
         }
-    }, [layerRef, points, hotel]);
+    }, [layerRef, points, startLocation]);
 }
+
