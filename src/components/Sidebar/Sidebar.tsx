@@ -4,7 +4,6 @@ import { useStore } from '@/store/useStore';
 import PoiList from '@/components/Sidebar/PoiList';
 import Metrics from '@/components/Sidebar/Metrics';
 import ActionButtons from '@/components/Sidebar/ActionButtons';
-import RouteModeToggle from '@/components/Sidebar/RouteModeToggle';
 
 const AddressSearch = dynamic(
     () => import('@/components/Sidebar/AddressSearch'),
@@ -48,7 +47,7 @@ export default function Sidebar({ isOpen, mapView, onFindLodging, onOptimizeRout
                 </div>
 
                 {/* Scrollable content */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
                     {/* Error display */}
                     {error && (
                         <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -58,9 +57,6 @@ export default function Sidebar({ isOpen, mapView, onFindLodging, onOptimizeRout
 
                     {/* POI List */}
                     <PoiList />
-
-                    {/* Route Mode Toggle */}
-                    <RouteModeToggle />
 
                     {/* Metrics */}
                     <Metrics />
