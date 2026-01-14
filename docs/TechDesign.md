@@ -2,9 +2,9 @@
 
 | Metadata | Details |
 | :--- | :--- |
-| **Version** | 1.0 |
+| **Version** | 1.1 |
 | **Status** | Draft |
-| **Last Updated** | 2026-01-13 |
+| **Last Updated** | 2026-01-14 |
 | **Author** | Hangxi Xiang |
 | **Phase** | Phase 1 (MVP) |
 
@@ -109,7 +109,7 @@ The key architectural decision is a **shared .NET Core library** (`GeoRoute.Core
 | Endpoint | Method | Description | PRD Requirement |
 |----------|--------|-------------|-----------------|
 | `/api/lodging/calculate` | POST | Calculate geometric center + buffer for best stay area | FR-1.3, FR-1.4 |
-| `/api/route/optimize` | POST | Calculate optimal route sequence from selected hotel | FR-1.7, FR-1.9, FR-1.10 |
+| `/api/route/optimize` | POST | Calculate optimal route sequence with Loop or One-Way mode | FR-1.6, FR-1.7, FR-1.9 |
 | `/api/export/pdf` | POST | Generate PDF itinerary | FR-1.11 |
 
 > [!NOTE]
@@ -152,29 +152,36 @@ The key architectural decision is a **shared .NET Core library** (`GeoRoute.Core
     { "id": "p2", "name": "Lake Louise", "lat": 51.4167, "lng": -116.2167 },
     { "id": "p3", "name": "Moraine Lake", "lat": 51.3217, "lng": -116.1860 }
   ],
-  "hotel": { "name": "Fairmont Banff Springs", "lat": 51.1670, "lng": -115.5570 },
+  "startLocation": { "name": "Fairmont Banff Springs", "lat": 51.1670, "lng": -115.5570 },
+  "routeMode": "loop",
   "optimizeSequence": true,
   "manualSequence": null
 }
 ```
 
 > [!TIP]
-> When `optimizeSequence: false`, the backend uses `manualSequence` (e.g., `["p2", "p1", "p3"]`) and only recalculates travel times.
+> - `routeMode`: `"loop"` (Return to Start) or `"one-way"` (End at last POI)
+> - When `optimizeSequence: false`, the backend uses `manualSequence` (e.g., `["p2", "p1", "p3"]`) and only recalculates travel times.
 
 #### Optimize Route Response
 ```json
 {
   "sequence": ["p1", "p3", "p2"],
   "legs": [
-    { "from": "hotel", "to": "p1", "distanceKm": 2.5, "durationMin": 5 },
+    { "from": "start", "to": "p1", "distanceKm": 2.5, "durationMin": 5 },
     { "from": "p1", "to": "p3", "distanceKm": 45.2, "durationMin": 52 },
     { "from": "p3", "to": "p2", "distanceKm": 12.1, "durationMin": 15 },
-    { "from": "p2", "to": "hotel", "distanceKm": 38.0, "durationMin": 42 }
+    { "from": "p2", "to": "start", "distanceKm": 38.0, "durationMin": 42 }
   ],
   "totalDistanceKm": 97.8,
   "totalDurationMin": 114,
-  "isRoundTrip": true
+  "routeMode": "loop"
 }
+```
+
+> [!NOTE]
+> - In `"one-way"` mode, the final leg (`"from": "p2", "to": "start"`) is omitted.
+> - `"from": "start"` represents the user's Start Location (Hotel, Airport, etc.).
 
 ---
 
@@ -187,7 +194,10 @@ For Phase 1 with <10 POIs, we'll use a **Nearest Neighbor heuristic with 2-opt i
 ```csharp
 public class RouteOptimizerService
 {
-    public OptimizedRoute Optimize(List<PointOfInterest> points, Coordinate start)
+    public OptimizedRoute Optimize(
+        List<PointOfInterest> points, 
+        Coordinate start,
+        RouteMode mode = RouteMode.Loop)
     {
         // 1. Build initial route using Nearest Neighbor
         var route = NearestNeighborTSP(points, start);
@@ -195,11 +205,23 @@ public class RouteOptimizerService
         // 2. Improve with 2-opt swaps
         route = TwoOptImprove(route);
         
-        // 3. Calculate travel times via ArcGIS Routing API
-        var legs = CalculateLegs(route);
+        // 3. Calculate travel legs
+        var legs = CalculateLegs(route, mode);
         
-        return new OptimizedRoute(route, legs);
+        // 4. For One-Way mode, omit return leg to start
+        if (mode == RouteMode.OneWay)
+        {
+            legs = legs.Where(l => l.To != "start").ToList();
+        }
+        
+        return new OptimizedRoute(route, legs, mode);
     }
+}
+
+public enum RouteMode
+{
+    Loop,   // Return to start location
+    OneWay  // End at last POI
 }
 ```
 
@@ -404,6 +426,8 @@ We use **Zustand** for high-performance, transient state updates (dragging pins,
 // store/useStore.ts
 interface AppState {
   points: PointOfInterest[];
+  startLocation: PointOfInterest | null;  // Hotel, Airport, or custom location
+  routeMode: 'loop' | 'one-way';           // NEW: Trip mode toggle
   lodgingZone: LodgingZone | null;
   route: OptimizedRoute | null;
   
@@ -411,6 +435,8 @@ interface AppState {
   addPoint: (poi: PointOfInterest) => void;
   removePoint: (id: string) => void;
   reorderPoints: (fromIndex: number, toIndex: number) => void;
+  setStartLocation: (location: PointOfInterest | null) => void;
+  setRouteMode: (mode: 'loop' | 'one-way') => void;
   setRoute: (route: OptimizedRoute) => void;
 }
 
@@ -451,13 +477,14 @@ sequenceDiagram
     end
     
     rect rgb(255, 248, 240)
-    Note over U,N: Step 2: Select Hotel & Optimize
-    U->>F: Select hotel location
-    F->>A: Add hotel marker to map
+    Note over U,N: Step 2: Set Start Location & Route Mode
+    U->>F: Set Start Location (Hotel/Airport/Pin)
+    F->>A: Add start marker to map
+    U->>F: Select Route Mode (Loop or One-Way)
     U->>F: Click "Optimize My Day"
-    F->>B: POST /api/route/optimize (with hotel)
-    B->>B: TSP optimization
-    B-->>F: OptimizedRoute (round-trip)
+    F->>B: POST /api/route/optimize (with startLocation + routeMode)
+    B->>B: TSP optimization (respects mode)
+    B-->>F: OptimizedRoute (loop or one-way path)
     F->>A: Draw route polyline
     F->>F: Update sidebar metrics
     end
@@ -478,6 +505,7 @@ sequenceDiagram
 ### Backend
 - [ ] Create `GeoRoute.Core` shared library
 - [ ] Implement `RouteOptimizerService` with Nearest Neighbor + 2-opt
+- [ ] **Add `RouteMode` enum (Loop / One-Way) support**
 - [ ] Implement `CentroidCalculatorService` with NTS
 - [ ] Create `GeoRoute.Api` with Minimal APIs
 - [ ] Create `GeoRoute.Functions` project
@@ -490,6 +518,7 @@ sequenceDiagram
 - [ ] Implement Map Click to Add Pin
 - [ ] Implement POI add/remove/toggle
 - [ ] Create draggable sidebar POI list
+- [ ] **Implement Route Mode toggle (Loop / One-Way)**
 - [ ] Implement route visualization
 - [ ] Implement lodging zone circle
 - [ ] Add metrics display panel

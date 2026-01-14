@@ -44,8 +44,8 @@ The **GeoRoute Optimizer** is a spatial decision-support tool designed to elimin
 | **FR-1.3** | **Lodging Logic** | The system shall calculate a "Geometric Center" (Centroid) based on the POI distribution. | **Critical** |
 | **FR-1.4** | **Lodging Viz** | The system shall display a "Preferred Lodging Buffer" (radius) around the centroid on the map. | **Critical** |
 | **FR-1.5** | **External Link** | The system shall provide a shortcut to view accommodations (e.g., Booking.com/Airbnb) within the buffer. | **High** |
-| **FR-1.6** | **Start Point** | Users shall be able to select a hotel/lodging within the buffer as the trip's start point. | **Critical** |
-| **FR-1.7** | **Smart Sequencing** | The system shall calculate the most efficient sequence (TSP/Routing algorithm) to visit all active POIs, starting and ending at the selected lodging. | **Critical** |
+| **FR-1.6** | **Start Location** | Users shall be able to set a specific Start Point (e.g., Booked Hotel, Airport) manually or from the buffer. | **Critical** |
+| **FR-1.7** | **Smart Sequencing** | The system shall calculate the most efficient sequence (TSP) visiting all POIs, supporting **Loop** and **One-Way** modes. | **Critical** |
 | **FR-1.8** | **Visualization** | The system shall render the optimized path on the map connecting points in order. | **Critical** |
 | **FR-1.9** | **Metrics Display** | The system shall display travel time and distance for each leg and the total trip. | **Critical** |
 | **FR-1.10** | **Manual Reordering** | Users shall be able to manually drag-and-drop stops to reorder the sequence, triggering a recalculation of travel times. | **High** |
@@ -61,6 +61,8 @@ The **GeoRoute Optimizer** is a spatial decision-support tool designed to elimin
 | **FR-2.3** | **Min Duration Alert** | If the auto-distributed stay time is < 1 hour per POI, the system shall alert the user that the schedule is too crowded. | **Critical** |
 | **FR-2.4** | **Manual Override** | Users shall be able to manually override the auto-calculated stay time for specific locations. | **High** |
 | **FR-2.5** | **Timeline Gen** | The system shall generate a detailed timeline (Arrive -> Stay -> Depart -> Travel). | **Critical** |
+| **FR-2.6** | **Smart Re-optimization** | Users shall be able to trigger a "Clean Path" optimization that uses their current manual sequence as a starting point and applies local improvements (2-opt) without drastically changing the order. | **High** |
+| **FR-2.7** | **Region Selector** | Users shall be able to select a destination region/city (e.g., Banff, Tokyo, Paris) which sets the initial map center and biases address search results to that area. | **High** |
 
 ### Phase 3: Multi-Region & Grand Strategy (Post-MVP)
 *Focus: Scaling the local solution into a cross-regional journey.*
@@ -81,14 +83,14 @@ The **GeoRoute Optimizer** is a spatial decision-support tool designed to elimin
 ## 6. UI/UX Requirements (User Flow)
 1.  **Input**: User lands on a full-screen map interface.
 2.  **Add POIs**: User adds 5-8 pins representing their "Wishlist" for the day.
-3.  **Find Stay Area**: User clicks **"Find Best Stay Area"** CTA.
+3.  **Find Stay Area (Optional)**: User clicks **"Find Best Stay Area"** CTA (ideal for users who haven't booked yet).
 4.  **Stay Area Output**:
     *   Map overlays a semi-transparent "Best Stay Area" circle (centroid + buffer).
     *   Sidebar shows external links to Booking.com/Airbnb filtered to this area.
-5.  **Select Hotel**: User clicks on map or enters address to set their hotel/lodging as the **Start Point**.
+5.  **Set Start & Mode**: User identifies their Start Point (e.g. Map Click or Address) and selects **Loop** or **One-Way** mode.
 6.  **Optimize Route**: User clicks **"Optimize My Day"** CTA.
 7.  **Route Output**:
-    *   Map draws the optimized route line starting and ending at the hotel.
+    *   Map draws the optimized route line (closing the loop or ending path based on mode).
     *   Sidebar slides out with a **"Placeline"** showing sequence, travel times, and distances.
 8.  **Refinement**: User drags a POI or reorders stops; route recalculates in real-time.
 
