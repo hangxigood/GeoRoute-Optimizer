@@ -16,6 +16,7 @@ interface AppState {
     addPoint: (poi: PointOfInterest) => void;
     removePoint: (id: string) => void;
     updatePoint: (id: string, updates: Partial<PointOfInterest>) => void;
+    setPoints: (points: PointOfInterest[]) => void;
     reorderPoints: (fromIndex: number, toIndex: number) => void;
     setHotel: (hotel: PointOfInterest | null) => void;
     setLodgingZone: (zone: LodgingZone | null) => void;
@@ -59,6 +60,8 @@ export const useStore = create<AppState>((set, get) => ({
             ),
             route: null,
         })),
+
+    setPoints: (points) => set({ points, route: null }),
 
     reorderPoints: (fromIndex, toIndex) =>
         set((state) => {
