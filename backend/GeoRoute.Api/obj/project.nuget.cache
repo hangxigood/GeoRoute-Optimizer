@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "hZDru/8oURE=",
+  "success": true,
+  "projectFilePath": "/Users/xianghangxi/Github/GeoRoute-Optimizer/backend/GeoRoute.Api/GeoRoute.Api.csproj",
+  "expectedPackageFiles": [
+    "/Users/xianghangxi/.nuget/packages/nettopologysuite/2.6.0/nettopologysuite.2.6.0.nupkg.sha512",
+    "/Users/xianghangxi/.nuget/packages/questpdf/2025.12.2/questpdf.2025.12.2.nupkg.sha512"
+  ],
+  "logs": []
+}
