@@ -3,6 +3,7 @@
 import { useStore } from '@/store/useStore';
 import type { PointOfInterest } from '@/types/poi';
 import { Reorder, useDragControls } from 'framer-motion';
+import RouteModeToggle from './RouteModeToggle';
 
 function PoiListItem({ poi, index }: { poi: PointOfInterest; index: number }) {
     const { removePoint, setStartLocation } = useStore();
@@ -123,9 +124,12 @@ export function PoiList() {
             {/* POI list */}
             {points.length > 0 && (
                 <>
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Points of Interest ({points.length})
-                    </h4>
+                    <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            Points of Interest ({points.length})
+                        </h4>
+                        <RouteModeToggle />
+                    </div>
                     <Reorder.Group
                         axis="y"
                         values={points}
