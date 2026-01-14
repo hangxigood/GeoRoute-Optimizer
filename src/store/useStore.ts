@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { PointOfInterest, LodgingZone, OptimizedRoute, RouteMode } from '@/types/poi';
+import type { PointOfInterest, LodgingZone, OptimizedRoute, RouteMode, RouteMetrics } from '@/types/poi';
 import { api } from '@/services/api';
 
 interface AppState {
@@ -9,6 +9,7 @@ interface AppState {
     routeMode: RouteMode;
     lodgingZone: LodgingZone | null;
     route: OptimizedRoute | null;
+    routeMetrics: RouteMetrics | null;
     isLoading: boolean;
     error: string | null;
 
@@ -22,6 +23,7 @@ interface AppState {
     setRouteMode: (mode: RouteMode) => void;
     setLodgingZone: (zone: LodgingZone | null) => void;
     setRoute: (route: OptimizedRoute | null) => void;
+    setRouteMetrics: (metrics: RouteMetrics | null) => void;
     setLoading: (isLoading: boolean) => void;
     setError: (error: string | null) => void;
     clearAll: () => void;
@@ -38,6 +40,7 @@ export const useStore = create<AppState>((set, get) => ({
     routeMode: 'loop',
     lodgingZone: null,
     route: null,
+    routeMetrics: null,
     isLoading: false,
     error: null,
 
@@ -81,6 +84,8 @@ export const useStore = create<AppState>((set, get) => ({
 
     setRoute: (route) => set({ route }),
 
+    setRouteMetrics: (metrics) => set({ routeMetrics: metrics }),
+
     setLoading: (isLoading) => set({ isLoading }),
 
     setError: (error) => set({ error }),
@@ -92,6 +97,7 @@ export const useStore = create<AppState>((set, get) => ({
             routeMode: 'loop',
             lodgingZone: null,
             route: null,
+            routeMetrics: null,
             error: null,
         }),
 
