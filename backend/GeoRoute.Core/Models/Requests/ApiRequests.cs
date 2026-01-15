@@ -34,4 +34,6 @@ public record ExportPdfRequest
     public required OptimizedRoute Route { get; init; }
     public required IReadOnlyList<PointOfInterest> Points { get; init; }
     public PointOfInterest? StartLocation { get; init; }
+    public RouteMetrics? Metrics { get; init; }
+    public string? MapImageBase64 { get; init; }
 }

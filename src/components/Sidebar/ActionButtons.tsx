@@ -1,12 +1,14 @@
 import { useStore } from '@/store/useStore';
 import ExportButton from '@/components/Export/ExportButton';
+import type MapView from '@arcgis/core/views/MapView';
 
 interface ActionButtonsProps {
     onFindLodging: () => void;
     onOptimizeRoute: () => void;
+    mapView: MapView | null;
 }
 
-export default function ActionButtons({ onFindLodging, onOptimizeRoute }: ActionButtonsProps) {
+export default function ActionButtons({ onFindLodging, onOptimizeRoute, mapView }: ActionButtonsProps) {
     const { points, startLocation, isLoading, clearAll } = useStore();
 
     const canCalculateLodging = points.length >= 2 && !startLocation;
@@ -56,7 +58,7 @@ export default function ActionButtons({ onFindLodging, onOptimizeRoute }: Action
             </div>
 
             {/* Secondary Action (Export) */}
-            <ExportButton />
+            <ExportButton mapView={mapView} />
 
             {/* Utilitary Action (Clear) */}
             {(points.length > 0 || startLocation) && (

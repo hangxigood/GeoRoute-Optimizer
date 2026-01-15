@@ -66,7 +66,7 @@ export default function Sidebar({ isOpen, mapView, onFindLodging, onOptimizeRout
                 </div>
 
                 {/* Action buttons */}
-                <ActionButtons onFindLodging={onFindLodging} onOptimizeRoute={onOptimizeRoute} />
+                <ActionButtons onFindLodging={onFindLodging} onOptimizeRoute={onOptimizeRoute} mapView={mapView} />
             </div>
         </aside>
     );

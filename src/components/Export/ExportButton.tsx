@@ -3,9 +3,14 @@
 import { useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { api } from '@/services/api';
+import type MapView from '@arcgis/core/views/MapView';
 
-export function ExportButton() {
-    const { route, points, startLocation, isLoading } = useStore();
+interface ExportButtonProps {
+    mapView: MapView | null;
+}
+
+export function ExportButton({ mapView }: ExportButtonProps) {
+    const { route, points, startLocation, routeMetrics, isLoading } = useStore();
     const [isExporting, setIsExporting] = useState(false);
     const [exportError, setExportError] = useState<string | null>(null);
 
@@ -16,8 +21,25 @@ export function ExportButton() {
         setExportError(null);
 
         try {
-            // Get PDF blob from API
-            const blob = await api.export.exportPdf(route, points, startLocation);
+            // Capture map screenshot if available
+            let mapImageBase64: string | null = null;
+            if (mapView) {
+                try {
+                    const screenshot = await mapView.takeScreenshot({ format: 'png' });
+                    mapImageBase64 = screenshot.dataUrl;
+                } catch (err) {
+                    console.warn('Failed to capture map screenshot:', err);
+                }
+            }
+
+            // Get PDF blob from API with metrics and map image
+            const blob = await api.export.exportPdf(
+                route,
+                points,
+                startLocation,
+                routeMetrics,
+                mapImageBase64
+            );
 
             // Create download link
             const url = URL.createObjectURL(blob);

@@ -13,5 +13,7 @@ public interface IExportService
     byte[] GeneratePdf(
         OptimizedRoute route,
         IReadOnlyList<PointOfInterest> points,
-        PointOfInterest? startLocation);
+        PointOfInterest? startLocation,
+        RouteMetrics? metrics = null,
+        string? mapImageBase64 = null);
 }

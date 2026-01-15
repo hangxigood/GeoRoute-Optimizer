@@ -101,7 +101,9 @@ export const exportApi = {
     exportPdf: async (
         route: OptimizedRoute,
         points: PointOfInterest[],
-        startLocation: PointOfInterest | null
+        startLocation: PointOfInterest | null,
+        metrics: any | null = null,
+        mapImageBase64: string | null = null
     ): Promise<Blob> => {
         const response = await fetch(`${API_URL}/export/pdf`, {
             method: 'POST',
@@ -123,6 +125,17 @@ export const exportApi = {
                     lat: startLocation.lat,
                     lng: startLocation.lng,
                 } : null,
+                metrics: metrics ? {
+                    totalDistanceKm: metrics.totalDistanceKm,
+                    totalDurationMin: metrics.totalDurationMin,
+                    legs: metrics.legs?.map((leg: any) => ({
+                        fromId: leg.fromId,
+                        toId: leg.toId,
+                        distanceKm: leg.distanceKm,
+                        durationMin: leg.durationMin
+                    }))
+                } : null,
+                mapImageBase64
             }),
         });
 

@@ -20,7 +20,9 @@ public class ExportService : IExportService
     public byte[] GeneratePdf(
         OptimizedRoute route,
         IReadOnlyList<PointOfInterest> points,
-        PointOfInterest? startLocation)
+        PointOfInterest? startLocation,
+        RouteMetrics? metrics = null,
+        string? mapImageBase64 = null)
     {
         var pointLookup = points.ToDictionary(p => p.Id);
 
@@ -33,7 +35,7 @@ public class ExportService : IExportService
                 page.DefaultTextStyle(x => x.FontSize(11));
 
                 page.Header().Element(c => ComposeHeader(c, route));
-                page.Content().Element(c => ComposeContent(c, route, pointLookup, startLocation));
+                page.Content().Element(c => ComposeContent(c, route, pointLookup, startLocation, metrics, mapImageBase64));
                 page.Footer().Element(ComposeFooter);
             });
         });
@@ -75,10 +77,26 @@ public class ExportService : IExportService
         IContainer container,
         OptimizedRoute route,
         Dictionary<string, PointOfInterest> pointLookup,
-        PointOfInterest? startLocation)
+        PointOfInterest? startLocation,
+        RouteMetrics? metrics = null,
+        string? mapImageBase64 = null)
     {
         container.PaddingVertical(20).Column(column =>
         {
+            // Map image if provided
+            if (!string.IsNullOrEmpty(mapImageBase64))
+            {
+                try
+                {
+                    var imageData = Convert.FromBase64String(mapImageBase64.Split(',')[^1]);
+                    column.Item().PaddingBottom(15).Image(imageData).FitWidth();
+                }
+                catch
+                {
+                    // Silently skip if image decode fails
+                }
+            }
+
             // Summary box
             column.Item().Background(Colors.Blue.Lighten5).Padding(15).Column(summary =>
             {
@@ -99,12 +117,22 @@ public class ExportService : IExportService
                         c.Item().Text("Mode").FontSize(10).FontColor(Colors.Grey.Darken1);
                         c.Item().Text(route.RouteMode.ToString()).FontSize(16).Bold();
                     });
-                });
 
-                summary.Item().PaddingTop(10).Text("Note: Distance and time metrics are calculated in real-time on the map.")
-                    .FontSize(9)
-                    .Italic()
-                    .FontColor(Colors.Grey.Darken1);
+                    if (metrics != null)
+                    {
+                        row.RelativeItem().Column(c =>
+                        {
+                            c.Item().Text("Distance").FontSize(10).FontColor(Colors.Grey.Darken1);
+                            c.Item().Text($"{metrics.TotalDistanceKm:F1} km").FontSize(16).Bold();
+                        });
+
+                        row.RelativeItem().Column(c =>
+                        {
+                            c.Item().Text("Duration").FontSize(10).FontColor(Colors.Grey.Darken1);
+                            c.Item().Text(FormatDuration(metrics.TotalDurationMin)).FontSize(16).Bold();
+                        });
+                    }
+                });
             });
 
             // Itinerary
@@ -127,12 +155,31 @@ public class ExportService : IExportService
                             .FontColor(Colors.Grey.Darken1);
                     });
                 });
+
+                // Show leg from start to first POI if metrics available
+                if (metrics?.Legs != null && route.Sequence.Count > 0)
+                {
+                    var firstPoiId = route.Sequence.First();
+                    var leg = metrics.Legs.FirstOrDefault(l => 
+                        (l.FromId == startLocation.Name) && 
+                        (l.ToId == pointLookup.GetValueOrDefault(firstPoiId)?.Name || l.ToId == firstPoiId));
+                    
+                    if (leg != null)
+                    {
+                        column.Item().PaddingLeft(30).PaddingTop(3).Text($"↓ {leg.DistanceKm:F1} km • {FormatDuration(leg.DurationMin)}")
+                            .FontSize(9)
+                            .FontColor(Colors.Blue.Medium);
+                    }
+                }
             }
 
             // Optimized sequence
             int stopNumber = 1;
-            foreach (var poiId in route.Sequence)
+            var sequenceList = route.Sequence.ToList();
+            
+            for (int i = 0; i < sequenceList.Count; i++)
             {
+                var poiId = sequenceList[i];
                 if (pointLookup.TryGetValue(poiId, out var poi))
                 {
                     column.Item().PaddingTop(10).Row(row =>
@@ -156,6 +203,36 @@ public class ExportService : IExportService
                                 .FontColor(Colors.Grey.Darken1);
                         });
                     });
+
+                    // Show leg info to next stop if metrics available
+                    if (metrics?.Legs != null && i < sequenceList.Count - 1)
+                    {
+                        var nextPoiId = sequenceList[i + 1];
+                        var leg = metrics.Legs.FirstOrDefault(l => 
+                            (l.FromId == poi.Name || l.FromId == poiId) && 
+                            (l.ToId == pointLookup.GetValueOrDefault(nextPoiId)?.Name || l.ToId == nextPoiId));
+                        
+                        if (leg != null)
+                        {
+                            column.Item().PaddingLeft(30).PaddingTop(3).Text($"↓ {leg.DistanceKm:F1} km • {FormatDuration(leg.DurationMin)}")
+                                .FontSize(9)
+                                .FontColor(Colors.Blue.Medium);
+                        }
+                    }
+                    // Show leg back to start for loop mode
+                    else if (metrics?.Legs != null && i == sequenceList.Count - 1 && route.RouteMode == RouteMode.Loop && startLocation != null)
+                    {
+                        var leg = metrics.Legs.FirstOrDefault(l => 
+                            (l.FromId == poi.Name || l.FromId == poiId) && 
+                            (l.ToId == startLocation.Name));
+                        
+                        if (leg != null)
+                        {
+                            column.Item().PaddingLeft(30).PaddingTop(3).Text($"↓ {leg.DistanceKm:F1} km • {FormatDuration(leg.DurationMin)}")
+                                .FontSize(9)
+                                .FontColor(Colors.Blue.Medium);
+                        }
+                    }
 
                     stopNumber++;
                 }

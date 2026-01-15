@@ -36,7 +36,9 @@ public class ExportController : ControllerBase
             var pdfBytes = _exportService.GeneratePdf(
                 request.Route,
                 request.Points,
-                request.StartLocation);
+                request.StartLocation,
+                request.Metrics,
+                request.MapImageBase64);
 
             return File(pdfBytes, "application/pdf", "itinerary.pdf");
         }
