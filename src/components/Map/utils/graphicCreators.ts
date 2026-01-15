@@ -38,7 +38,7 @@ export function createPoiGraphic(poi: PointOfInterest, index: number): Graphic[]
             color: 'white',
             text: String(index + 1),
             font: { size: 10, weight: 'bold' },
-            yoffset: 0,
+            yoffset: -1.5,
         }),
     });
 

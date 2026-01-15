@@ -25,7 +25,18 @@ export function ExportButton({ mapView }: ExportButtonProps) {
             let mapImageBase64: string | null = null;
             if (mapView) {
                 try {
-                    const screenshot = await mapView.takeScreenshot({ format: 'png' });
+                    // Zoom to fit all points (mimic Reset View "house button" behavior)
+                    const poiLayer = mapView.map?.layers.find(l => l.id === 'poi-layer') as __esri.GraphicsLayer;
+                    if (poiLayer && poiLayer.graphics.length > 0) {
+                        await mapView.goTo(poiLayer.graphics.toArray(), {
+                            animate: false // Instant jump ensures we are at the correct view before screenshot
+                        });
+                    }
+
+                    // Small delay to ensure tiles load if we moved significantly
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    const screenshot = await mapView.takeScreenshot({ format: 'png', width: 800 });
                     mapImageBase64 = screenshot.dataUrl;
                 } catch (err) {
                     console.warn('Failed to capture map screenshot:', err);

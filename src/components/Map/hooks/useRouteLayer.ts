@@ -106,8 +106,6 @@ export function useRouteLayer(
                     const routeResult = result.routeResults[0].route;
                     if (!routeResult) return;
 
-                    console.log("ArcGIS Route Attributes:", routeResult.attributes);
-
                     if (!routeResult.geometry) return;
                     const polylineGeometry = routeResult.geometry;
 
@@ -119,7 +117,6 @@ export function useRouteLayer(
                         })
                     });
 
-                    console.log("Adding route graphic:", routeGraphic);
                     currentLayer.add(routeGraphic);
 
                     // Extract real metrics from ArcGIS (checking multiple possible keys)
