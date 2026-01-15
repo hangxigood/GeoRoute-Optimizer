@@ -124,7 +124,7 @@ public class RouteOptimizerService : IRouteOptimizerService
         {
             improved = false;
 
-            for (int i = 0; i < route.Count - 1; i++)
+            for (int i = -1; i < route.Count - 1; i++)
             {
                 for (int j = i + 2; j < route.Count; j++)
                 {
@@ -148,22 +148,41 @@ public class RouteOptimizerService : IRouteOptimizerService
     {
         var newRoute = new List<string>();
         
-        // Add elements from start to i
-        for (int k = 0; k <= i; k++)
+        // When i = -1, we're swapping from before the first element (start location)
+        // In this case, we just reverse from index 0 to j
+        if (i == -1)
         {
-            newRoute.Add(route[k]);
+            // Reverse elements from 0 to j
+            for (int k = j; k >= 0; k--)
+            {
+                newRoute.Add(route[k]);
+            }
+            
+            // Add remaining elements
+            for (int k = j + 1; k < route.Count; k++)
+            {
+                newRoute.Add(route[k]);
+            }
         }
-        
-        // Add elements from i+1 to j in reverse
-        for (int k = j; k > i; k--)
+        else
         {
-            newRoute.Add(route[k]);
-        }
-        
-        // Add remaining elements
-        for (int k = j + 1; k < route.Count; k++)
-        {
-            newRoute.Add(route[k]);
+            // Normal case: Add elements from start to i
+            for (int k = 0; k <= i; k++)
+            {
+                newRoute.Add(route[k]);
+            }
+            
+            // Add elements from i+1 to j in reverse
+            for (int k = j; k > i; k--)
+            {
+                newRoute.Add(route[k]);
+            }
+            
+            // Add remaining elements
+            for (int k = j + 1; k < route.Count; k++)
+            {
+                newRoute.Add(route[k]);
+            }
         }
         
         return newRoute;
