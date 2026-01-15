@@ -17,7 +17,7 @@ const MapViewComponent = dynamic(
 
 export default function Home() {
   const [mapView, setMapView] = useState<MapView | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { isLoading, calculateLodgingZone, optimizeRoute } = useStore();
 
@@ -34,7 +34,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-gray-900">
+    <div className="relative h-[100dvh] w-full overflow-hidden bg-gray-900">
       {/* Map (full screen) */}
       <div className="absolute inset-0">
         <MapViewComponent onMapReady={handleMapReady} />

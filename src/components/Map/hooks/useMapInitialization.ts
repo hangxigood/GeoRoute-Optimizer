@@ -45,6 +45,9 @@ export function useMapInitialization(
         viewRef.current = view;
 
         view.when(() => {
+            // Move zoom and compass to bottom-right to avoid overlap with sidebar toggle
+            view.ui.move('zoom', 'bottom-right');
+            view.ui.move('compass', 'bottom-right');
             onMapReady?.(view);
         });
 
