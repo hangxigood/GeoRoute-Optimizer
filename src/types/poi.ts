@@ -30,8 +30,16 @@ export interface OptimizedRoute {
 }
 
 // Frontend-calculated metrics from ArcGIS Route Service
+export interface RouteLeg {
+    fromId: string;
+    toId: string;
+    distanceKm: number;
+    durationMin: number;
+}
+
 export interface RouteMetrics {
     totalDistanceKm: number;
     totalDurationMin: number;
+    legs?: RouteLeg[];
 }
 

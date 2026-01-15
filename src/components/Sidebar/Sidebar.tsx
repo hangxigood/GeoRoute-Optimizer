@@ -37,9 +37,6 @@ export default function Sidebar({ isOpen, mapView, onFindLodging, onOptimizeRout
 
                 {/* Search */}
                 <div className="flex-shrink-0 p-4 border-b border-gray-200">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Search for a place
-                    </label>
                     <AddressSearch mapView={mapView} />
                 </div>
 

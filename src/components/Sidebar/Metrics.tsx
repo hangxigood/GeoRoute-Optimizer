@@ -70,6 +70,24 @@ export function Metrics() {
                         ✓ Real road distances from ArcGIS
                     </p>
 
+                    {/* Route Legs */}
+                    {routeMetrics.legs && routeMetrics.legs.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                            <h5 className="text-sm font-semibold text-blue-700 mb-2">Route Legs</h5>
+                            {routeMetrics.legs.map((leg, index) => (
+                                <div key={index} className="p-2 bg-white rounded text-xs">
+                                    <div className="font-medium text-gray-700 mb-1">
+                                        Step {index + 1}: {leg.fromId} ➝ {leg.toId}
+                                    </div>
+                                    <div className="flex gap-4 text-gray-600">
+                                        <span>{leg.distanceKm.toFixed(1)} km</span>
+                                        <span>{formatDuration(leg.durationMin)}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
                     {route.routeMode === 'loop' && (
                         <p className="mt-2 text-xs text-blue-600 flex items-center gap-1">
                             <span>🔄</span> Loop trip (returns to start)

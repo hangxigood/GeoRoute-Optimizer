@@ -7,7 +7,6 @@ import FeatureSet from '@arcgis/core/rest/support/FeatureSet';
 import Graphic from '@arcgis/core/Graphic';
 import Point from '@arcgis/core/geometry/Point';
 import Polyline from '@arcgis/core/geometry/Polyline';
-import { ROUTE_SYMBOL } from '@/lib/arcgis-config';
 import { useStore } from '@/store/useStore';
 
 
@@ -85,6 +84,7 @@ export function useRouteLayer(
         const routeParams = new RouteParameters({
             stops: new FeatureSet({ features: stops }),
             returnDirections: false,
+            returnStops: true,
             preserveFirstStop: true,
             preserveLastStop: true,
             outSpatialReference: { wkid: 4326 }
@@ -125,6 +125,36 @@ export function useRouteLayer(
                     // Try Total_Minutes, or Total_TravelTime, or Total_Time
                     const totalTime = routeResult.attributes.Total_Minutes || routeResult.attributes.Total_TravelTime || routeResult.attributes.Total_Time || 0;
 
+                    // Extract stops to calculate legs
+                    const returnedStops = result.routeResults[0].stops || [];
+                    const legs = [];
+
+                    if (returnedStops.length >= 2) {
+                        for (let i = 1; i < returnedStops.length; i++) {
+                            const prevStop = returnedStops[i - 1];
+                            const currStop = returnedStops[i];
+
+                            const prevCumulKm = prevStop.attributes?.Cumul_Kilometers || 0;
+                            const currCumulKm = currStop.attributes?.Cumul_Kilometers || 0;
+                            const prevCumulMin = prevStop.attributes?.Cumul_TravelTime || 0;
+                            const currCumulMin = currStop.attributes?.Cumul_TravelTime || 0;
+
+                            const legDistanceKm = currCumulKm - prevCumulKm;
+                            const legDurationMin = currCumulMin - prevCumulMin;
+
+                            // Map stop names back to IDs
+                            const fromName = prevStop.attributes?.Name || '';
+                            const toName = currStop.attributes?.Name || '';
+
+                            legs.push({
+                                fromId: fromName,
+                                toId: toName,
+                                distanceKm: legDistanceKm,
+                                durationMin: legDurationMin
+                            });
+                        }
+                    }
+
                     // CHECK BEFORE SETTING: Only update if values differ effectively
                     // allowing for small floating point differences
                     const currentMetrics = useStore.getState().routeMetrics;
@@ -135,7 +165,8 @@ export function useRouteLayer(
                         console.log("Updating route metrics in store...");
                         setRouteMetrics({
                             totalDistanceKm: totalLength,
-                            totalDurationMin: totalTime
+                            totalDurationMin: totalTime,
+                            legs
                         });
                     } else {
                         console.log("Route metrics unchanged, skipping store update.");
