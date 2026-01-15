@@ -2,9 +2,9 @@
 
 | Metadata | Details |
 | :--- | :--- |
-| **Version** | 1.1 |
-| **Status** | Draft |
-| **Last Updated** | 2026-01-14 |
+| **Version** | 1.2 |
+| **Status** | In Progress |
+| **Last Updated** | 2026-01-15 |
 | **Author** | Hangxi Xiang |
 | **Phase** | Phase 1 (MVP) |
 
@@ -20,8 +20,8 @@ This document outlines the technical architecture for Phase 1 of GeoRoute Optimi
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | Next.js 15 + ArcGIS Maps SDK for JavaScript |
-| **Backend** | .NET 10 / ASP.NET Core Web API |
+| **Frontend** | Next.js 15 + ArcGIS Maps SDK for JavaScript + Tailwind CSS |
+| **Backend** | .NET 9.0/10.0 / ASP.NET Core Web API |
 | **Geospatial** | NetTopologySuite (NTS) |
 | **PDF Export** | QuestPDF |
 | **Deployment** | Azure Functions (Consumption Plan) |
@@ -183,61 +183,14 @@ The key architectural decision is a **shared .NET Core library** (`GeoRoute.Core
 
 For Phase 1 with <10 POIs, we'll use a **Nearest Neighbor heuristic with 2-opt improvement**:
 
-```csharp
-public class RouteOptimizerService
-{
-    public OptimizedRoute Optimize(
-        List<PointOfInterest> points, 
-        Coordinate start,
-        RouteMode mode = RouteMode.Loop)
-    {
-        // 1. Build initial route using Nearest Neighbor
-        var route = NearestNeighborTSP(points, start);
-        
-        // 2. Improve with 2-opt swaps
-        route = TwoOptImprove(route);
-        
-        // 3. Return sequence (Frontend calculates metrics via ArcGIS)
-        return new OptimizedRoute(route, mode);
-    }
-}
-
-public enum RouteMode
-{
-    Loop,   // Return to start location
-    OneWay  // End at last POI
-}
-```
+See implementation: [RouteOptimizerService.cs](../backend/GeoRoute.Core/Services/RouteOptimizerService.cs)
 
 > [!NOTE]
 > For Phase 3 (20+ POIs), we'll upgrade to **Christofides algorithm** or use ArcGIS Route Service directly.
 
 ### 5.2 Centroid Calculation (NTS)
 
-```csharp
-using NetTopologySuite.Geometries;
-
-public class CentroidCalculatorService
-{
-    private const double DefaultBufferKm = 15;
-
-    public LodgingZone Calculate(List<PointOfInterest> points, double bufferKm = DefaultBufferKm)
-    {
-        var factory = new GeometryFactory();
-        var coordinates = points.Select(p => new Coordinate(p.Lng, p.Lat)).ToArray();
-        
-        // Create MultiPoint and calculate centroid
-        var multiPoint = factory.CreateMultiPointFromCoords(coordinates);
-        var centroid = multiPoint.Centroid;
-        
-        return new LodgingZone
-        {
-            Centroid = new LatLng(centroid.Y, centroid.X),
-            BufferRadiusKm = bufferKm
-        };
-    }
-}
-```
+See implementation: [CentroidCalculatorService.cs](../backend/GeoRoute.Core/Services/CentroidCalculatorService.cs)
 
 ---
 
@@ -245,28 +198,7 @@ public class CentroidCalculatorService
 
 ### 6.1 Function Definitions
 
-```csharp
-// GeoRoute.Functions/Functions/OptimizeRouteFunction.cs
-public class OptimizeRouteFunction
-{
-    private readonly IRouteOptimizerService _optimizer;
-
-    public OptimizeRouteFunction(IRouteOptimizerService optimizer)
-    {
-        _optimizer = optimizer;
-    }
-
-    [Function("OptimizeRoute")]
-    public async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "route/optimize")] 
-        HttpRequest req)
-    {
-        var request = await req.ReadFromJsonAsync<OptimizeRouteRequest>();
-        var result = _optimizer.Optimize(request.Points, request.StartPoint);
-        return new OkObjectResult(result);
-    }
-}
-```
+See implementation: [OptimizeRouteFunction.cs](../backend/GeoRoute.Functions/Functions/OptimizeRouteFunction.cs)
 
 ### 6.2 Azure Resources
 
@@ -319,114 +251,45 @@ NEXT_PUBLIC_API_URL=https://georoute-func.azurewebsites.net/api
 ├── app/
 │   ├── page.tsx                  # Main map page
 │   ├── layout.tsx                # Root layout
-│   └── api/                      # API routes (optional local proxy)
+│   └── globals.css               # Global styles (Tailwind)
 ├── components/
 │   ├── Map/
 │   │   ├── MapView.tsx           # Main map container
-│   │   ├── PoiLayer.tsx          # POI graphics layer
-│   │   └── RouteLayer.tsx        # Route polyline layer
+│   │   └── hooks/
+│   │       ├── useMapInitialization.ts
+│   │       ├── useMapClickHandler.ts
+│   │       ├── usePoiLayer.ts
+│   │       ├── useRouteLayer.ts
+│   │       └── useLodgingZoneLayer.ts
 │   ├── Sidebar/
+│   │   ├── Sidebar.tsx           # Main sidebar container
 │   │   ├── PoiList.tsx           # Draggable list for reordering POIs
-│   │   ├── AddressSearch.tsx     # Autocomplete search with area bias
-│   │   └── Metrics.tsx           # Distance/time display
-│   └── Export/
-│       └── ExportButton.tsx      # PDF/iCal export
-├── hooks/
-│   └── useRouteOptimizer.ts
+│   │   ├── AddressSearch.tsx     # Search for locations
+│   │   ├── RouteModeToggle.tsx   # Loop/One-way toggle
+│   │   ├── ActionButtons.tsx     # Find Stay & Optimize buttons
+│   │   └── Metrics.tsx           # Distance/time display with legs
+│   ├── Export/
+│   │   └── ExportButton.tsx      # PDF export
+│   └── UI/
+│       ├── SidebarToggle.tsx
+│       └── LoadingOverlay.tsx
+├── services/
+│   └── api.ts                    # Backend API client
 ├── store/
-│   └── useStore.ts           # Zustand store (syncs to URL)
-├── lib/
-│   └── arcgis-config.ts
+│   └── useStore.ts               # Zustand store
 └── types/
-    └── poi.ts
+    └── poi.ts                    # TypeScript interfaces
 ```
 
 ### 8.2 ArcGIS Setup (Next.js)
 
-```typescript
-// lib/arcgis-config.ts
-import esriConfig from '@arcgis/core/config';
-esriConfig.apiKey = process.env.NEXT_PUBLIC_ARCGIS_API_KEY;
-
-// components/Map/MapView.tsx
-'use client';
-import { useEffect, useRef } from 'react';
-import Map from '@arcgis/core/Map';
-import MapView from '@arcgis/core/views/MapView';
-import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer';
-import Search from '@arcgis/core/widgets/Search';
-
-export function MapViewComponent() {
-  const mapDiv = useRef<HTMLDivElement>(null);
-  const poiLayer = useRef(new GraphicsLayer());
-  const routeLayer = useRef(new GraphicsLayer());
-
-  useEffect(() => {
-    if (!mapDiv.current) return;
-    const map = new Map({ basemap: 'streets-navigation-vector' });
-    map.addMany([routeLayer.current, poiLayer.current]);
-    
-    const view = new MapView({
-      container: mapDiv.current,
-      map,
-      center: [-115.5708, 51.1784], // Banff default
-      zoom: 10
-    });
-
-    // Address Search with Area Limit
-    const searchWidget = new Search({
-      view,
-      locationEnabled: false,
-      includeDefaultSources: false,
-      sources: [{
-        url: "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer",
-        singleLineFieldName: "SingleLine",
-        name: "ArcGIS World Geocoding Service",
-        placeholder: "Search for a place...",
-        filter: {
-          geometry: view.extent // Bias search to current map view
-        }
-      }]
-    });
-    view.ui.add(searchWidget, "top-right");
-
-    // Click to Pin
-    view.on("click", (event) => {
-      // Logic to add POI at event.mapPoint
-    });
-    
-    return () => view.destroy();
-  }, []);
-
-  return <div ref={mapDiv} className="w-full h-screen" />;
-}
-```
+See implementation: [MapView.tsx](../src/components/Map/MapView.tsx) and [arcgis-config.ts](../src/lib/arcgis-config.ts)
 
 ### 8.3 State Management (Zustand + URL Sync)
 
 We use **Zustand** for high-performance, transient state updates (dragging pins, toggling POIs) and synchronize critical state to the URL query string for shareability.
 
-```typescript
-// store/useStore.ts
-interface AppState {
-  points: PointOfInterest[];
-  startLocation: PointOfInterest | null;  // Hotel, Airport, or custom location
-  routeMode: 'loop' | 'one-way';           // NEW: Trip mode toggle
-  lodgingZone: LodgingZone | null;
-  route: OptimizedRoute | null;
-  
-  // Actions
-  addPoint: (poi: PointOfInterest) => void;
-  removePoint: (id: string) => void;
-  reorderPoints: (fromIndex: number, toIndex: number) => void;
-  setStartLocation: (location: PointOfInterest | null) => void;
-  setRouteMode: (mode: 'loop' | 'one-way') => void;
-  setRoute: (route: OptimizedRoute) => void;
-}
-
-// Middleware or useEffect will handle: 
-// ZIP(State) <-> Base64(URL Query Param)
-```
+See implementation: [useStore.ts](../src/store/useStore.ts)
 
 ---
 
@@ -489,26 +352,29 @@ sequenceDiagram
 ## 10. Phase 1 Implementation Checklist
 
 ### Backend
-- [ ] Create `GeoRoute.Core` shared library
-- [ ] Implement `RouteOptimizerService` with Nearest Neighbor + 2-opt
-- [ ] **Add `RouteMode` enum (Loop / One-Way) support**
-- [ ] Implement `CentroidCalculatorService` with NTS
-- [ ] Create `GeoRoute.Api` with Minimal APIs
-- [ ] Create `GeoRoute.Functions` project
-- [ ] Configure CORS for local development
+- [x] Create `GeoRoute.Core` shared library
+- [x] Implement `RouteOptimizerService` with Nearest Neighbor + 2-opt
+- [x] Add `RouteMode` enum (Loop / One-Way) support
+- [x] Implement `CentroidCalculatorService` with NTS
+- [x] Create `GeoRoute.Api` with Controllers
+- [x] Implement `ExportService` with QuestPDF
+- [x] Configure CORS for local development
+- [ ] Create `GeoRoute.Functions` project (Azure deployment)
 
 ### Frontend
-- [ ] Install `@arcgis/core` package
-- [ ] Create map component with basemap
-- [ ] Implement Address Search widget (limited to area)
-- [ ] Implement Map Click to Add Pin
-- [ ] Implement POI add/remove/toggle
-- [ ] Create draggable sidebar POI list
-- [ ] **Implement Route Mode toggle (Loop / One-Way)**
-- [ ] Implement route visualization
-- [ ] Implement lodging zone circle
-- [ ] Add metrics display panel
-- [ ] Create PDF export component
+- [x] Install `@arcgis/core` package
+- [x] Create map component with basemap
+- [x] Implement Address Search component
+- [x] Implement Map Click to Add Pin
+- [x] Implement POI add/remove/toggle
+- [x] Create draggable sidebar POI list with auto-reordering
+- [x] Implement Route Mode toggle (Loop / One-Way)
+- [x] Implement route visualization with ArcGIS Route Service
+- [x] Implement lodging zone circle
+- [x] Add metrics display panel with route legs
+- [x] Create PDF export with map screenshot
+- [x] Add reset view button
+- [x] Implement Tailwind CSS styling
 
 ### DevOps
 - [ ] Set up Azure Function App (Consumption Plan)
