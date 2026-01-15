@@ -29,6 +29,10 @@ export function AddressSearch({ mapView }: AddressSearchProps) {
             popupEnabled: false,
             resultGraphicEnabled: false,
             includeDefaultSources: false,
+            goToOverride: () => {
+                // Disable automatic zoom/pan when selecting a search result
+                return Promise.resolve();
+            },
             sources: [
                 {
                     url: SEARCH_CONFIG.geocodeServiceUrl,

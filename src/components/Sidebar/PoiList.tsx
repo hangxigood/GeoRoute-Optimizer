@@ -4,8 +4,9 @@ import { useStore } from '@/store/useStore';
 import type { PointOfInterest } from '@/types/poi';
 import { Reorder, useDragControls } from 'framer-motion';
 import RouteModeToggle from './RouteModeToggle';
+import type MapView from '@arcgis/core/views/MapView';
 
-function PoiListItem({ poi, index }: { poi: PointOfInterest; index: number }) {
+function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: number; mapView: MapView | null }) {
     const { removePoint, setStartLocation } = useStore();
     const dragControls = useDragControls();
 
@@ -13,6 +14,15 @@ function PoiListItem({ poi, index }: { poi: PointOfInterest; index: number }) {
         e.stopPropagation(); // Prevent drag start if clicked carelessly
         removePoint(poi.id);
         setStartLocation({ ...poi, isHotel: true });
+    };
+
+    const handleClick = () => {
+        if (mapView) {
+            mapView.goTo({
+                target: [poi.lng, poi.lat],
+                zoom: 16
+            });
+        }
     };
 
     return (
@@ -24,8 +34,10 @@ function PoiListItem({ poi, index }: { poi: PointOfInterest; index: number }) {
             className="relative"
             whileDrag={{ scale: 1.02, zIndex: 10, boxShadow: "0px 5px 15px rgba(0,0,0,0.1)" }}
         >
-            <div className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg 
-                       hover:shadow-md hover:border-blue-300 transition-all group select-none">
+            <div
+                onClick={handleClick}
+                className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg 
+                       hover:shadow-md hover:border-blue-300 transition-all group select-none cursor-pointer">
 
                 {/* Drag handle */}
                 <div
@@ -74,7 +86,7 @@ function PoiListItem({ poi, index }: { poi: PointOfInterest; index: number }) {
     );
 }
 
-export function PoiList() {
+export function PoiList({ mapView }: { mapView: MapView | null }) {
     const { points, startLocation, setStartLocation, setPoints } = useStore();
 
     const handleClearStartLocation = () => {
@@ -137,7 +149,7 @@ export function PoiList() {
                         className="space-y-2 list-none p-0 m-0"
                     >
                         {points.map((poi, index) => (
-                            <PoiListItem key={poi.id} poi={poi} index={index} />
+                            <PoiListItem key={poi.id} poi={poi} index={index} mapView={mapView} />
                         ))}
                     </Reorder.Group>
                 </>

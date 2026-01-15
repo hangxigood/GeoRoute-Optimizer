@@ -53,7 +53,7 @@ export default function Sidebar({ isOpen, mapView, onFindLodging, onOptimizeRout
                     )}
 
                     {/* POI List */}
-                    <PoiList />
+                    <PoiList mapView={mapView} />
 
                     {/* Metrics */}
                     <Metrics />
