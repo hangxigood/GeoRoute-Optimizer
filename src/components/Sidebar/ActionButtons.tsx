@@ -9,7 +9,7 @@ interface ActionButtonsProps {
 export default function ActionButtons({ onFindLodging, onOptimizeRoute }: ActionButtonsProps) {
     const { points, startLocation, isLoading, clearAll } = useStore();
 
-    const canCalculateLodging = points.length >= 2;
+    const canCalculateLodging = points.length >= 2 && !startLocation;
     const canOptimizeRoute = points.length >= 1;
 
     return (
