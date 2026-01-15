@@ -1,4 +1,4 @@
-import type { PointOfInterest, LodgingZone, OptimizedRoute, RouteMode } from '@/types/poi';
+import type { PointOfInterest, LodgingZone, OptimizedRoute, RouteMode, RouteMetrics, RouteLeg } from '@/types/poi';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.105:7001/api';
 
@@ -102,7 +102,7 @@ export const exportApi = {
         route: OptimizedRoute,
         points: PointOfInterest[],
         startLocation: PointOfInterest | null,
-        metrics: any | null = null,
+        metrics: RouteMetrics | null = null,
         mapImageBase64: string | null = null
     ): Promise<Blob> => {
         const response = await fetch(`${API_URL}/export/pdf`, {
@@ -128,7 +128,7 @@ export const exportApi = {
                 metrics: metrics ? {
                     totalDistanceKm: metrics.totalDistanceKm,
                     totalDurationMin: metrics.totalDurationMin,
-                    legs: metrics.legs?.map((leg: any) => ({
+                    legs: metrics.legs?.map((leg: RouteLeg) => ({
                         fromId: leg.fromId,
                         toId: leg.toId,
                         distanceKm: leg.distanceKm,

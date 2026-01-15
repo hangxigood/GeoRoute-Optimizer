@@ -7,6 +7,8 @@ import FeatureSet from '@arcgis/core/rest/support/FeatureSet';
 import Graphic from '@arcgis/core/Graphic';
 import Point from '@arcgis/core/geometry/Point';
 import Polyline from '@arcgis/core/geometry/Polyline';
+import RouteSolveResult from '@arcgis/core/rest/support/RouteSolveResult';
+import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol';
 import { useStore } from '@/store/useStore';
 
 
@@ -94,36 +96,37 @@ export function useRouteLayer(
         const currentLayer = layer;
 
         routeService.solve(ROUTE_SERVICE_URL, routeParams)
-            .then((result: any) => {
+            .then((result: RouteSolveResult) => {
                 if (!currentLayer) return;
 
                 // Clear previous graphics before adding new ones to avoid duplicates during rapid updates
                 currentLayer.removeAll();
 
-                if (result.routeResults.length > 0) {
+                if (result.routeResults && result.routeResults.length > 0) {
                     const routeResult = result.routeResults[0].route;
+                    if (!routeResult) return;
 
                     console.log("ArcGIS Route Attributes:", routeResult.attributes);
 
-                    // Ensure geometry is a Polyline instance if it's not already
-                    const polylineGeometry = new Polyline(routeResult.geometry);
+                    if (!routeResult.geometry) return;
+                    const polylineGeometry = routeResult.geometry;
 
                     const routeGraphic = new Graphic({
                         geometry: polylineGeometry,
-                        symbol: {
-                            type: "simple-line",
+                        symbol: new SimpleLineSymbol({
                             color: [59, 130, 246], // Solid blue, no alpha to be safe
                             width: 4
-                        } as any
+                        })
                     });
 
                     console.log("Adding route graphic:", routeGraphic);
                     currentLayer.add(routeGraphic);
 
                     // Extract real metrics from ArcGIS (checking multiple possible keys)
-                    const totalLength = routeResult.attributes.Total_Kilometers || routeResult.attributes.Total_Distance || 0;
+                    const attributes = routeResult.attributes || {};
+                    const totalLength = attributes.Total_Kilometers || attributes.Total_Distance || 0;
                     // Try Total_Minutes, or Total_TravelTime, or Total_Time
-                    const totalTime = routeResult.attributes.Total_Minutes || routeResult.attributes.Total_TravelTime || routeResult.attributes.Total_Time || 0;
+                    const totalTime = attributes.Total_Minutes || attributes.Total_TravelTime || attributes.Total_Time || 0;
 
                     // Extract stops to calculate legs
                     const returnedStops = result.routeResults[0].stops || [];
@@ -173,13 +176,13 @@ export function useRouteLayer(
                     }
                 }
             })
-            .catch((error: any) => {
+            .catch((error: unknown) => {
                 console.error('Route solving failed:', error);
                 console.warn('Falling back to straight-line visualization');
             });
 
 
 
-    }, [layerRef, optimizedRoute, points, startLocation]);
+    }, [layerRef, optimizedRoute, points, startLocation, setRouteMetrics]);
 
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useStore } from '@/store/useStore';
-import type { RouteMode } from '@/types/poi';
+
 
 export function RouteModeToggle() {
     const { routeMode, setRouteMode } = useStore();
