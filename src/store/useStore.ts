@@ -143,7 +143,19 @@ export const useStore = create<AppState>((set, get) => ({
 
         try {
             const route = await api.route.optimize(points, startLocation, routeMode, optimizeSequence);
-            set({ route, isLoading: false });
+
+            // Reorder points based on the optimized sequence
+            if (route && route.sequence && route.sequence.length > 0) {
+                const pointsMap = new Map(points.map(p => [p.id, p]));
+                const reorderedPoints = route.sequence
+                    .map(id => pointsMap.get(id))
+                    .filter((p): p is PointOfInterest => p !== undefined);
+
+                set({ route, points: reorderedPoints, isLoading: false });
+            } else {
+                set({ route, isLoading: false });
+            }
+
             return route;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to optimize route';
