@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import type { PointOfInterest } from '@/types/poi';
 import { Reorder, useDragControls } from 'framer-motion';
@@ -8,9 +8,12 @@ import RouteModeToggle from './RouteModeToggle';
 import type MapView from '@arcgis/core/views/MapView';
 
 function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: number; mapView: MapView | null }) {
-    const { removePoint, setStartLocation } = useStore();
+    const { removePoint, setStartLocation, updatePoint } = useStore();
     const dragControls = useDragControls();
     const isDragging = useRef(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedName, setEditedName] = useState(poi.name);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const handleSetAsStart = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent drag start if clicked carelessly
@@ -24,11 +27,37 @@ function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: num
             isDragging.current = false;
             return;
         }
-        if (mapView) {
+        if (mapView && !isEditing) {
             mapView.goTo({
                 target: [poi.lng, poi.lat],
                 zoom: 16
             });
+        }
+    };
+
+    const handleNameClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsEditing(true);
+        setEditedName(poi.name);
+        // Focus input after state update
+        setTimeout(() => inputRef.current?.focus(), 0);
+    };
+
+    const handleNameSave = () => {
+        if (editedName.trim() && editedName !== poi.name) {
+            updatePoint(poi.id, { name: editedName.trim() });
+        } else {
+            setEditedName(poi.name); // Reset to original if empty
+        }
+        setIsEditing(false);
+    };
+
+    const handleNameKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleNameSave();
+        } else if (e.key === 'Escape') {
+            setEditedName(poi.name);
+            setIsEditing(false);
         }
     };
 
@@ -66,14 +95,35 @@ function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: num
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{poi.name}</p>
+                    {isEditing ? (
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={editedName}
+                            onChange={(e) => setEditedName(e.target.value)}
+                            onBlur={handleNameSave}
+                            onKeyDown={handleNameKeyDown}
+                            className="w-full font-medium text-gray-900 px-2 py-1 border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    ) : (
+                        <div className="group/name relative">
+                            <p
+                                className="font-medium text-gray-900 truncate cursor-text hover:text-blue-600 transition-colors pr-6"
+                                onClick={handleNameClick}
+                                title="Click to edit name"
+                            >
+                                {poi.name}
+                            </p>
+                        </div>
+                    )}
                     <p className="text-xs text-gray-500">
                         {poi.lat.toFixed(4)}, {poi.lng.toFixed(4)}
                     </p>
                 </div>
 
                 {/* Actions */}
-                <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex-shrink-0 flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                     <button
                         onClick={handleSetAsStart}
                         className="p-1.5 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded transition-colors"
@@ -98,9 +148,41 @@ function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: num
 
 export function PoiList({ mapView }: { mapView: MapView | null }) {
     const { points, startLocation, setStartLocation, setPoints } = useStore();
+    const [isEditingStart, setIsEditingStart] = useState(false);
+    const [editedStartName, setEditedStartName] = useState('');
+    const startInputRef = useRef<HTMLInputElement>(null);
 
     const handleClearStartLocation = () => {
         setStartLocation(null);
+    };
+
+    const handleStartNameClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (startLocation) {
+            setIsEditingStart(true);
+            setEditedStartName(startLocation.name);
+            setTimeout(() => startInputRef.current?.focus(), 0);
+        }
+    };
+
+    const handleStartNameSave = () => {
+        if (startLocation && editedStartName.trim() && editedStartName !== startLocation.name) {
+            setStartLocation({ ...startLocation, name: editedStartName.trim() });
+        } else if (startLocation) {
+            setEditedStartName(startLocation.name);
+        }
+        setIsEditingStart(false);
+    };
+
+    const handleStartNameKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleStartNameSave();
+        } else if (e.key === 'Escape') {
+            if (startLocation) {
+                setEditedStartName(startLocation.name);
+            }
+            setIsEditingStart(false);
+        }
     };
 
     if (points.length === 0 && !startLocation) {
@@ -128,7 +210,31 @@ export function PoiList({ mapView }: { mapView: MapView | null }) {
                             📍
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{startLocation.name}</p>
+                            {isEditingStart ? (
+                                <input
+                                    ref={startInputRef}
+                                    type="text"
+                                    value={editedStartName}
+                                    onChange={(e) => setEditedStartName(e.target.value)}
+                                    onBlur={handleStartNameSave}
+                                    onKeyDown={handleStartNameKeyDown}
+                                    className="w-full font-medium text-gray-900 px-2 py-1 border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            ) : (
+                                <div className="group/name relative">
+                                    <p
+                                        className="font-medium text-gray-900 truncate cursor-text hover:text-blue-600 transition-colors pr-6"
+                                        onClick={handleStartNameClick}
+                                        title="Click to edit name"
+                                    >
+                                        {startLocation.name}
+                                    </p>
+                                    <span className="absolute right-0 top-0 text-gray-400 opacity-0 group-hover/name:opacity-100 transition-opacity text-xs">
+                                        ✏️
+                                    </span>
+                                </div>
+                            )}
                             <p className="text-xs text-gray-500">
                                 {startLocation.lat.toFixed(4)}, {startLocation.lng.toFixed(4)}
                             </p>
