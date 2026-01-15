@@ -1,3 +1,4 @@
+using System;
 using System.Web;
 using GeoRoute.Core.Interfaces;
 using GeoRoute.Core.Models;
@@ -60,13 +61,31 @@ public class CentroidCalculatorService : ICentroidCalculatorService
 
     private static BookingLinks GenerateBookingLinks(LatLng centroid, double radiusKm)
     {
-        var lat = centroid.Lat.ToString("F4");
-        var lng = centroid.Lng.ToString("F4");
+        var lat = centroid.Lat;
+        var lng = centroid.Lng;
+
+        // Airbnb: Calculate bounding box for search
+        // 1 degree latitude ~= 111 km
+        // 1 degree longitude ~= 111 km * cos(latitude)
+        var deltaLat = radiusKm / 111.0;
+        var deltaLng = radiusKm / (111.0 * Math.Cos(lat * Math.PI / 180.0));
+
+        var neLat = (lat + deltaLat).ToString("F4");
+        var neLng = (lng + deltaLng).ToString("F4");
+        var swLat = (lat - deltaLat).ToString("F4");
+        var swLng = (lng - deltaLng).ToString("F4");
+
+        // Format center coordinates
+        var latStr = lat.ToString("F4");
+        var lngStr = lng.ToString("F4");
 
         return new BookingLinks
         {
-            BookingCom = $"https://www.booking.com/searchresults.html?ss={HttpUtility.UrlEncode($"{lat},{lng}")}&radius={radiusKm}",
-            Airbnb = $"https://www.airbnb.com/s/homes?lat={lat}&lng={lng}"
+            // Booking.com: Use map view with coordinates to ensure location is respected
+            BookingCom = $"https://www.booking.com/searchresults.html?ss=&latitude={latStr}&longitude={lngStr}&map=1",
+            
+            // Airbnb: Use bounding box with required search parameters to trigger automatic results
+            Airbnb = $"https://www.airbnb.com/s/homes?refinement_paths%5B%5D=%2Fhomes&ne_lat={neLat}&ne_lng={neLng}&sw_lat={swLat}&sw_lng={swLng}&zoom=12&search_by_map=true&location_search=NEARBY&source=structured_search_input_header&search_type=unknown"
         };
     }
 }
