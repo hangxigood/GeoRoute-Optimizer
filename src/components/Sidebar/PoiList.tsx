@@ -107,9 +107,12 @@ export function PoiList({ mapView }: { mapView: MapView | null }) {
             {/* Start Location section */}
             {startLocation && (
                 <div className="mb-4">
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                        Start Location
-                    </h4>
+                    <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            Start Location
+                        </h4>
+                        <RouteModeToggle />
+                    </div>
                     <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                         <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm">
                             📍
@@ -136,12 +139,9 @@ export function PoiList({ mapView }: { mapView: MapView | null }) {
             {/* POI list */}
             {points.length > 0 && (
                 <>
-                    <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                            Points of Interest ({points.length})
-                        </h4>
-                        <RouteModeToggle />
-                    </div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Points of Interest ({points.length})
+                    </h4>
                     <Reorder.Group
                         axis="y"
                         values={points}
