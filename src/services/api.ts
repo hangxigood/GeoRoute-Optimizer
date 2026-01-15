@@ -77,7 +77,10 @@ export const routeApi = {
         const data = await response.json();
 
         // Normalize routeMode from backend (PascalCase) to frontend (lowercase)
-        const normalizeRouteMode = (mode: string): RouteMode => {
+        const normalizeRouteMode = (mode: string | undefined | null): RouteMode => {
+            if (!mode || typeof mode !== 'string') {
+                return 'loop'; // Default fallback
+            }
             const normalized = mode.toLowerCase();
             if (normalized === 'loop') return 'loop';
             if (normalized === 'oneway' || normalized === 'one-way') return 'one-way';

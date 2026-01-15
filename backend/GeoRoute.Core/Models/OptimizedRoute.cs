@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace GeoRoute.Core.Models;
 
 /// <summary>
 /// Mode for route calculation.
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum RouteMode
 {
     /// <summary>
