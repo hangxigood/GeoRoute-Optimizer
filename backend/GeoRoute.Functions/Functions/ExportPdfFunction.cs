@@ -37,7 +37,9 @@ public class ExportPdfFunction
             var pdfBytes = _exportService.GeneratePdf(
                 request.Route,
                 request.Points,
-                request.StartLocation);
+                request.StartLocation,
+                request.Metrics,
+                request.MapImageBase64);
 
             return new FileContentResult(pdfBytes, "application/pdf")
             {
