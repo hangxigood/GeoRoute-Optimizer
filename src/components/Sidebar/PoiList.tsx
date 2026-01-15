@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { useStore } from '@/store/useStore';
 import type { PointOfInterest } from '@/types/poi';
 import { Reorder, useDragControls } from 'framer-motion';
@@ -9,6 +10,7 @@ import type MapView from '@arcgis/core/views/MapView';
 function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: number; mapView: MapView | null }) {
     const { removePoint, setStartLocation } = useStore();
     const dragControls = useDragControls();
+    const isDragging = useRef(false);
 
     const handleSetAsStart = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent drag start if clicked carelessly
@@ -17,6 +19,11 @@ function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: num
     };
 
     const handleClick = () => {
+        // Don't zoom if we just finished dragging
+        if (isDragging.current) {
+            isDragging.current = false;
+            return;
+        }
         if (mapView) {
             mapView.goTo({
                 target: [poi.lng, poi.lat],
@@ -42,7 +49,10 @@ function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: num
                 {/* Drag handle */}
                 <div
                     className="flex-shrink-0 text-gray-400 cursor-grab active:cursor-grabbing p-1 hover:text-gray-600"
-                    onPointerDown={(e) => dragControls.start(e)}
+                    onPointerDown={(e) => {
+                        isDragging.current = true;
+                        dragControls.start(e);
+                    }}
                 >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M8 6h2v2H8V6zm6 0h2v2h-2V6zM8 11h2v2H8v-2zm6 0h2v2h-2v-2zM8 16h2v2H8v-2zm6 0h2v2h-2v-2z" />
