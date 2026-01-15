@@ -3,7 +3,7 @@
 import { useStore } from '@/store/useStore';
 
 export function Metrics() {
-    const { route, routeMetrics, lodgingZone } = useStore();
+    const { route, routeMetrics, lodgingZone, setLodgingZone } = useStore();
 
     if (!route && !lodgingZone) {
         return null;
@@ -14,9 +14,19 @@ export function Metrics() {
             {/* Lodging Zone Info */}
             {lodgingZone && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                        <span>🏡</span> Best Stay Area
-                    </h4>
+                    <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-green-800 flex items-center gap-2">
+                            <span>🏡</span> Best Stay Area
+                        </h4>
+                        <button
+                            onClick={() => setLodgingZone(null)}
+                            className="text-green-600 hover:text-green-800 hover:bg-green-100 rounded p-1 transition-colors"
+                            title="Remove stay area"
+                            aria-label="Remove stay area"
+                        >
+                            ✕
+                        </button>
+                    </div>
                     <p className="text-sm text-green-700 mb-3">
                         Stay within {lodgingZone.bufferRadiusKm}km of the center to minimize travel time.
                     </p>
