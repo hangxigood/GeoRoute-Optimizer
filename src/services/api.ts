@@ -64,7 +64,7 @@ export const routeApi = {
                     lat: startLocation.lat,
                     lng: startLocation.lng,
                 } : null,
-                routeMode,
+                routeMode: routeMode === 'one-way' ? 'OneWay' : 'Loop',
                 optimizeSequence,
                 manualSequence: optimizeSequence ? null : points.map(p => p.id),
             }),
@@ -74,7 +74,20 @@ export const routeApi = {
             throw new Error(`Backend API returned ${response.status}`);
         }
 
-        return response.json();
+        const data = await response.json();
+
+        // Normalize routeMode from backend (PascalCase) to frontend (lowercase)
+        const normalizeRouteMode = (mode: string): RouteMode => {
+            const normalized = mode.toLowerCase();
+            if (normalized === 'loop') return 'loop';
+            if (normalized === 'oneway' || normalized === 'one-way') return 'one-way';
+            return 'loop'; // Default fallback
+        };
+
+        return {
+            ...data,
+            routeMode: normalizeRouteMode(data.routeMode)
+        };
     },
 };
 
@@ -94,7 +107,10 @@ export const exportApi = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                route,
+                route: {
+                    ...route,
+                    routeMode: route.routeMode === 'one-way' ? 'OneWay' : 'Loop'
+                },
                 points: points.map(p => ({
                     id: p.id,
                     name: p.name,
