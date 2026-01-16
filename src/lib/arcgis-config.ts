@@ -9,8 +9,8 @@ if (typeof window !== 'undefined') {
 // Default map settings
 export const MAP_DEFAULTS = {
     basemap: 'streets-navigation-vector',
-    center: [-115.5708, 51.1784] as [number, number], // Banff, Alberta
-    zoom: 10,
+    center: [-98.5795, 39.8283] as [number, number], // Center of USA
+    zoom: 4,
 };
 
 // Search widget configuration
