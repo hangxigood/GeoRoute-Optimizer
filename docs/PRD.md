@@ -44,7 +44,7 @@ The **GeoRoute Optimizer** is a spatial decision-support tool designed to elimin
 | **FR-1.3** | **Lodging Logic** | **(Optional)** The system shall calculate a "Geometric Center" (Centroid) based on the POI distribution. | **High** |
 | **FR-1.4** | **Lodging Viz** | **(Optional)** The system shall display a "Preferred Lodging Buffer" (radius) around the centroid on the map. | **High** |
 | **FR-1.5** | **External Link** | **(Optional)** The system shall provide a shortcut to view accommodations within the buffer. | **High** |
-| **FR-1.6** | **Start Location** | Users shall be able to set a specific Start Point (e.g., Booked Hotel, Airport) manually. | **Critical** |
+| **FR-1.6** | **Start Location** | Users shall be able to set a specific Start Point. If removed/replaced, it reverts to the POI list. | **Critical** |
 | **FR-1.7** | **Smart Sequencing** | The system shall calculate the most efficient sequence (TSP) visiting all active POIs, supporting **Loop** and **One-Way** modes. | **Critical** |
 | **FR-1.8** | **Visualization** | The system shall render the optimized path on the map connecting points in order. | **Critical** |
 | **FR-1.9** | **Metrics Display** | The system shall display travel time and distance for each leg and the total trip. | **Critical** |

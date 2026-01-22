@@ -85,7 +85,25 @@ export const useStore = create<AppState>((set, get) => ({
             return { points: newPoints, route: null };
         }),
 
-    setStartLocation: (location) => set({ startLocation: location, route: null }),
+    setStartLocation: (location) =>
+        set((state) => {
+            const updates: Partial<AppState> = { startLocation: location, route: null };
+
+            // If there's an existing start location, revert it back to the POI list
+            if (state.startLocation) {
+                const existingStart = state.startLocation;
+
+                // Check if this point already exists in the points array (avoid duplicates)
+                const alreadyExists = state.points.some(p => p.id === existingStart.id);
+
+                if (!alreadyExists) {
+                    // Add the old start location back to the points array as an active POI
+                    updates.points = [...state.points, { ...existingStart, isActive: true }];
+                }
+            }
+
+            return updates;
+        }),
 
     setRouteMode: (mode) => set({ routeMode: mode, route: null }),
 
