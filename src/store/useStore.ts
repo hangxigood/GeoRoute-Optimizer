@@ -17,6 +17,7 @@ interface AppState {
     addPoint: (poi: PointOfInterest) => void;
     removePoint: (id: string) => void;
     updatePoint: (id: string, updates: Partial<PointOfInterest>) => void;
+    togglePointActive: (id: string) => void;
     setPoints: (points: PointOfInterest[]) => void;
     reorderPoints: (fromIndex: number, toIndex: number) => void;
     setStartLocation: (location: PointOfInterest | null) => void;
@@ -47,7 +48,7 @@ export const useStore = create<AppState>((set, get) => ({
     // Actions
     addPoint: (poi) =>
         set((state) => ({
-            points: [...state.points, poi],
+            points: [...state.points, { ...poi, isActive: poi.isActive ?? true }],
             // Clear route when points change
             route: null,
         })),
@@ -62,6 +63,14 @@ export const useStore = create<AppState>((set, get) => ({
         set((state) => ({
             points: state.points.map((p) =>
                 p.id === id ? { ...p, ...updates } : p
+            ),
+            route: null,
+        })),
+
+    togglePointActive: (id) =>
+        set((state) => ({
+            points: state.points.map((p) =>
+                p.id === id ? { ...p, isActive: !(p.isActive ?? true) } : p
             ),
             route: null,
         })),
@@ -104,16 +113,17 @@ export const useStore = create<AppState>((set, get) => ({
     // Async Actions
     calculateLodgingZone: async (bufferRadiusKm = 5) => {
         const { points } = get();
+        const activePoints = points.filter(p => p.isActive !== false);
 
-        if (points.length < 2) {
-            set({ error: 'Need at least 2 points to calculate lodging zone' });
+        if (activePoints.length < 2) {
+            set({ error: 'Need at least 2 active points to calculate lodging zone' });
             return null;
         }
 
         set({ isLoading: true, error: null });
 
         try {
-            const zone = await api.lodging.calculate(points, bufferRadiusKm);
+            const zone = await api.lodging.calculate(activePoints, bufferRadiusKm);
             set({ lodgingZone: zone, isLoading: false });
             return zone;
         } catch (err) {
@@ -128,9 +138,10 @@ export const useStore = create<AppState>((set, get) => ({
 
     optimizeRoute: async (optimizeSequence = true) => {
         const { points, startLocation, routeMode } = get();
+        const activePoints = points.filter(p => p.isActive !== false);
 
-        if (points.length < 1) {
-            set({ error: 'Need at least 1 point to calculate route' });
+        if (activePoints.length < 1) {
+            set({ error: 'Need at least 1 active point to calculate route' });
             return null;
         }
 
@@ -142,14 +153,18 @@ export const useStore = create<AppState>((set, get) => ({
         set({ isLoading: true, error: null });
 
         try {
-            const route = await api.route.optimize(points, startLocation, routeMode, optimizeSequence);
+            const route = await api.route.optimize(activePoints, startLocation, routeMode, optimizeSequence);
 
             // Reorder points based on the optimized sequence
             if (route && route.sequence && route.sequence.length > 0) {
-                const pointsMap = new Map(points.map(p => [p.id, p]));
-                const reorderedPoints = route.sequence
+                const pointsMap = new Map(activePoints.map(p => [p.id, p]));
+                const reorderedActivePoints = route.sequence
                     .map(id => pointsMap.get(id))
                     .filter((p): p is PointOfInterest => p !== undefined);
+
+                // Preserve inactive points at the end
+                const inactivePoints = points.filter(p => p.isActive === false);
+                const reorderedPoints = [...reorderedActivePoints, ...inactivePoints];
 
                 set({ route, points: reorderedPoints, isLoading: false });
             } else {

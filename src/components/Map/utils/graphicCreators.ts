@@ -18,24 +18,28 @@ export function createPoiGraphic(poi: PointOfInterest, index: number): Graphic[]
         latitude: poi.lat,
     });
 
+    const isActive = poi.isActive !== false;
+    const markerColor = isActive ? POI_SYMBOL.color : [150, 150, 150, 0.5]; // Gray with opacity for inactive
+    const labelColor = isActive ? 'white' : [200, 200, 200];
+
     const markerGraphic = new Graphic({
         geometry: point,
         symbol: new SimpleMarkerSymbol({
-            color: POI_SYMBOL.color,
+            color: markerColor,
             size: POI_SYMBOL.size,
             outline: POI_SYMBOL.outline,
         }),
-        attributes: { id: poi.id, name: poi.name, index },
+        attributes: { id: poi.id, name: poi.name, index, isActive },
         popupTemplate: {
             title: poi.name,
-            content: `Stop #${index + 1}`,
+            content: `Stop #${index + 1}${!isActive ? ' (Inactive)' : ''}`,
         },
     });
 
     const labelGraphic = new Graphic({
         geometry: point,
         symbol: new TextSymbol({
-            color: 'white',
+            color: labelColor,
             text: String(index + 1),
             font: { size: 10, weight: 'bold' },
             yoffset: -1.5,

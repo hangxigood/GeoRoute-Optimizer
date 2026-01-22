@@ -8,7 +8,7 @@ import RouteModeToggle from './RouteModeToggle';
 import type MapView from '@arcgis/core/views/MapView';
 
 function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: number; mapView: MapView | null }) {
-    const { removePoint, setStartLocation, updatePoint } = useStore();
+    const { removePoint, setStartLocation, updatePoint, togglePointActive } = useStore();
     const dragControls = useDragControls();
     const isDragging = useRef(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -72,8 +72,9 @@ function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: num
         >
             <div
                 onClick={handleClick}
-                className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg 
-                       hover:shadow-md hover:border-blue-300 transition-all group select-none cursor-pointer">
+                className={`flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg 
+                       hover:shadow-md hover:border-blue-300 transition-all group select-none cursor-pointer ${poi.isActive === false ? 'opacity-40' : ''
+                    }`}>
 
                 {/* Drag handle */}
                 <div
@@ -109,7 +110,8 @@ function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: num
                     ) : (
                         <div className="group/name relative">
                             <p
-                                className="font-medium text-gray-900 truncate cursor-text hover:text-blue-600 transition-colors pr-6"
+                                className={`font-medium text-gray-900 truncate cursor-text hover:text-blue-600 transition-colors pr-6 ${poi.isActive === false ? 'line-through' : ''
+                                    }`}
                                 onClick={handleNameClick}
                                 title="Click to edit name"
                             >
@@ -130,6 +132,13 @@ function PoiListItem({ poi, index, mapView }: { poi: PointOfInterest; index: num
                         title="Set as start location"
                     >
                         📍
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); togglePointActive(poi.id); }}
+                        className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                        title={poi.isActive === false ? 'Activate POI' : 'Deactivate POI'}
+                    >
+                        {poi.isActive === false ? '🙈' : '👁️'}
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); removePoint(poi.id); }}

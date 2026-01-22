@@ -3,6 +3,7 @@ export interface PointOfInterest {
     name: string;
     lat: number;
     lng: number;
+    isActive?: boolean;  // Default: true
     address?: string;
     category?: string;
     isHotel?: boolean;

@@ -4,7 +4,7 @@
 | :--- | :--- |
 | **Version** | 1.2 |
 | **Status** | In Progress |
-| **Last Updated** | 2026-01-15 |
+| **Last Updated** | 2026-01-21 |
 | **Author** | Hangxi Xiang |
 | **Phase** | Phase 1 (MVP) |
 
@@ -108,12 +108,12 @@ The key architectural decision is a **shared .NET Core library** (`GeoRoute.Core
 
 | Endpoint | Method | Description | PRD Requirement |
 |----------|--------|-------------|-----------------|
-| `/api/lodging/calculate` | POST | Calculate geometric center + buffer for best stay area | FR-1.3, FR-1.4 |
-| `/api/route/optimize` | POST | Calculate optimal route sequence with Loop or One-Way mode | FR-1.6, FR-1.7, FR-1.9 |
-| `/api/export/pdf` | POST | Generate PDF itinerary | FR-1.11 |
+| `/api/lodging/calculate` | POST | Calculate geometric center + buffer for best stay area | FR-1.3, FR-1.4, FR-1.5 |
+| `/api/route/optimize` | POST | Calculate optimal route sequence with Loop or One-Way mode | FR-1.6, FR-1.7 |
+| `/api/export/pdf` | POST | Generate PDF itinerary | FR-1.10 |
 
 > [!NOTE]
-> Manual reordering (FR-1.10) is handled by the `/api/route/optimize` endpoint with `optimizeSequence: false`. This avoids a redundant endpoint.
+> Manual reordering (US-8) is handled by the `/api/route/optimize` endpoint with `optimizeSequence: false`. This avoids a redundant endpoint.
 
 ### 4.2 Request/Response Models
 
@@ -122,15 +122,14 @@ The key architectural decision is a **shared .NET Core library** (`GeoRoute.Core
 {
   "points": [
     { "id": "p1", "name": "Banff Gondola", "lat": 51.1483, "lng": -115.5700 },
-    { "id": "p2", "name": "Lake Louise", "lat": 51.4167, "lng": -116.2167 },
-    { "id": "p3", "name": "Moraine Lake", "lat": 51.3217, "lng": -116.1860 }
+    { "id": "p2", "name": "Lake Louise", "lat": 51.4167, "lng": -116.2167 }
   ],
   "bufferRadiusKm": 15
 }
 ```
 
 > [!NOTE]
-> **Auto-calculation**: The frontend automatically calls `/api/lodging/calculate` whenever there are **2 or more active POIs**. The lodging zone updates in real-time as the user adds/removes pins.
+> **Auto-calculation**: The frontend filters out inactive POIs (`isActive: false`) and calls `/api/lodging/calculate` when 2+ active POIs exist. The backend handles only active points.
 
 #### Calculate Lodging Zone Response
 ```json
@@ -149,8 +148,7 @@ The key architectural decision is a **shared .NET Core library** (`GeoRoute.Core
 {
   "points": [
     { "id": "p1", "name": "Banff Gondola", "lat": 51.1483, "lng": -115.5700 },
-    { "id": "p2", "name": "Lake Louise", "lat": 51.4167, "lng": -116.2167 },
-    { "id": "p3", "name": "Moraine Lake", "lat": 51.3217, "lng": -116.1860 }
+    { "id": "p2", "name": "Lake Louise", "lat": 51.4167, "lng": -116.2167 }
   ],
   "startLocation": { "name": "Fairmont Banff Springs", "lat": 51.1670, "lng": -115.5570 },
   "routeMode": "loop",
@@ -160,8 +158,9 @@ The key architectural decision is a **shared .NET Core library** (`GeoRoute.Core
 ```
 
 > [!TIP]
-> - `routeMode`: `"loop"` (Return to Start) or `"one-way"` (End at last POI)
-> - When `optimizeSequence: false`, the backend uses `manualSequence` (e.g., `["p2", "p1", "p3"]`) and only recalculates travel times.
+> - `routeMode`: `"loop"` (Return to Start) or `"one-way"` (End at last POI).
+> - **Frontend Filtering**: Only active POIs are sent; the backend never sees the `isActive` flag.
+> - When `optimizeSequence: false`, the backend uses `manualSequence` and only recalculates metrics.
 
 #### Optimize Route Response
 ```json
@@ -264,6 +263,7 @@ NEXT_PUBLIC_API_URL=https://georoute-func.azurewebsites.net/api
 │   ├── Sidebar/
 │   │   ├── Sidebar.tsx           # Main sidebar container
 │   │   ├── PoiList.tsx           # Draggable list for reordering POIs
+│   │   ├── PoiListItem.tsx       # Individual POI with toggle/remove (FR-1.2)
 │   │   ├── AddressSearch.tsx     # Search for locations
 │   │   ├── RouteModeToggle.tsx   # Loop/One-way toggle
 │   │   ├── ActionButtons.tsx     # Find Stay & Optimize buttons
@@ -287,7 +287,10 @@ See implementation: [MapView.tsx](../src/components/Map/MapView.tsx) and [arcgis
 
 ### 8.3 State Management (Zustand + URL Sync)
 
-We use **Zustand** for high-performance, transient state updates (dragging pins, toggling POIs) and synchronize critical state to the URL query string for shareability.
+We use **Zustand** for transient state updates and synchronize critical state (points, start location, route mode) to the URL query string.
+
+- **POI Management (FR-1.2)**: A `togglePointActive` action flips an `isActive` flag on POIs. Inactive POIs are visual-only (dimmed/strikethrough) and specifically **filtered out** before calling backend APIs or ArcGIS route services.
+- **Persistence**: Zustand state is mirrored in the URL for shareability.
 
 See implementation: [useStore.ts](../src/store/useStore.ts)
 
@@ -366,9 +369,17 @@ sequenceDiagram
 - [x] Create map component with basemap
 - [x] Implement Address Search component
 - [x] Implement Map Click to Add Pin
-- [x] Implement POI add/remove/toggle
+- [x] Implement POI add/remove
+- [ ] Implement POI active/inactive toggle (FR-1.2)
+  - [ ] Add `isActive` field to `PointOfInterest` type
+  - [ ] Add `togglePointActive` action to Zustand store
+  - [ ] Create `PoiListItem.tsx` with eye icon toggle button
+  - [ ] Filter inactive POIs before API calls
+  - [ ] Apply visual styling (opacity, strikethrough) to inactive POIs
+  - [ ] Update map pin rendering to dim inactive POIs
 - [x] Create draggable sidebar POI list with auto-reordering
 - [x] Implement Route Mode toggle (Loop / One-Way)
+- [x] Implement Start Location input
 - [x] Implement route visualization with ArcGIS Route Service
 - [x] Implement lodging zone circle
 - [x] Add metrics display panel with route legs

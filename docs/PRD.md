@@ -14,8 +14,8 @@
 The **GeoRoute Optimizer** is a spatial decision-support tool designed to eliminate the guesswork in trip planning. Unlike standard map tools, it automatically organizes scattered Points of Interest (POIs) into efficient daily routes and mathematically identifies the most strategic areas for lodging to minimize total travel time.
 
 ## 2. Target Audience
-*   **The "Efficient Explorer"**: Travelers who want to optimize their limited time to see the maximum number of attractions with minimum driving/transit time.
-*   **Road-Trippers**: Users planning complex, multi-stop journeys across specific regions (e.g., Canadian Rockies, Iceland Ring Road).
+*   **The "Efficient Explorer"**: Travelers who want to optimize their limited time to see the maximum number of attractions with minimum driving time.
+*   **Road-Trippers**: Users planning complex, multi-stop driving journeys across specific regions (e.g., Canadian Rockies, Iceland Ring Road).
 *   **Planners**: Individuals who prefer data-backed decisions over intuition when booking accommodation.
 
 ## 3. User Stories
@@ -23,46 +23,40 @@ The **GeoRoute Optimizer** is a spatial decision-support tool designed to elimin
 | ID | Persona | I want to... | So that... |
 | :--- | :--- | :--- | :--- |
 | **US-1** | Explorer | Drop pins on a map for all places I want to visit | I can visualize their spatial distribution. |
-| **US-2** | Planner | Have the system calculate the best visit order | I can avoid backtracking and save time. |
+| **US-2** | Planner | Have the system calculate the best driving sequence | I can avoid backtracking and save fuel/time. | |
 | **US-3** | Accom. Booker | Get a recommendation for a "Lodging Zone" | I am centrally located relative to my activities for the day. |
-| **US-4** | Traveler | Export my plan (PDF/iCal) with travel metrics | I can see travel times/distances offline during my trip. |
+| **US-4** | Traveler | Export my plan (PDF) with travel metrics | I can see travel times/distances offline during my trip. |
 | **US-5** | Explorer | Temporarily disable a specific POI | I can see how the route changes without deleting the point entirely. |
 | **US-6** | Planner | See travel time and distance between stops | I know how long each leg of the journey takes. |
 | **US-7** | Planner | See total trip duration and distance | I can gauge the feasibility of the entire day's plan. |
-| **US-8** | Planner | Set a "Stay Time" for each location | I can see a realistic schedule of when I'll arrive and depart each place. |
-| **US-9** | Planner | Manually reorder the sequence of stops | I can customize the route to better fit my personal preferences or constraints. |
+| **US-8** | Planner | Manually reorder the sequence of stops | I can customize the route to better fit my personal preferences or constraints. |
+| **US-9** | Planner | Be alerted if a stop might be closed when I arrive | I don't waste time driving to a closed attraction. |
 
 ## 4. Functional Requirements
 
-### Phase 1: Single-Day / Single-Region Optimization (MVP)
-*Focus: Solving the "local" problem of a 24-hour window.*
+### Phase 1: Regional Route Optimization (MVP)
+*Focus: Solving the spatial efficiency problem for a set of points.*
 
 | ID | Feature Area | Description | Priority |
 | :--- | :--- | :--- | :--- |
 | **FR-1.1** | **POI Management** | Users shall be able to add locations via search or map click. | **Critical** |
 | **FR-1.2** | **POI Management** | Users shall be able to remove or toggle "active/inactive" status of a POI. | **High** |
-| **FR-1.3** | **Lodging Logic** | The system shall calculate a "Geometric Center" (Centroid) based on the POI distribution. | **Critical** |
-| **FR-1.4** | **Lodging Viz** | The system shall display a "Preferred Lodging Buffer" (radius) around the centroid on the map. | **Critical** |
-| **FR-1.5** | **External Link** | The system shall provide a shortcut to view accommodations (e.g., Booking.com/Airbnb) within the buffer. | **High** |
-| **FR-1.6** | **Start Location** | Users shall be able to set a specific Start Point (e.g., Booked Hotel, Airport) manually or from the buffer. | **Critical** |
-| **FR-1.7** | **Smart Sequencing** | The system shall calculate the most efficient sequence (TSP) visiting all POIs, supporting **Loop** and **One-Way** modes. | **Critical** |
+| **FR-1.3** | **Lodging Logic** | **(Optional)** The system shall calculate a "Geometric Center" (Centroid) based on the POI distribution. | **High** |
+| **FR-1.4** | **Lodging Viz** | **(Optional)** The system shall display a "Preferred Lodging Buffer" (radius) around the centroid on the map. | **High** |
+| **FR-1.5** | **External Link** | **(Optional)** The system shall provide a shortcut to view accommodations within the buffer. | **High** |
+| **FR-1.6** | **Start Location** | Users shall be able to set a specific Start Point (e.g., Booked Hotel, Airport) manually. | **Critical** |
+| **FR-1.7** | **Smart Sequencing** | The system shall calculate the most efficient sequence (TSP) visiting all active POIs, supporting **Loop** and **One-Way** modes. | **Critical** |
 | **FR-1.8** | **Visualization** | The system shall render the optimized path on the map connecting points in order. | **Critical** |
 | **FR-1.9** | **Metrics Display** | The system shall display travel time and distance for each leg and the total trip. | **Critical** |
-| **FR-1.10** | **Manual Reordering** | Users shall be able to manually drag-and-drop stops to reorder the sequence, triggering a recalculation of travel times. | **High** |
-| **FR-1.11** | **Data Export** | Users can export the daily summary (Sequence + Travel times/kms) to a structured format (PDF/iCal). | **High** |
+| **FR-1.10** | **Data Export** | Users can export the summary (Sequence + Travel times/kms) to a structured format (PDF). | **High** |
 
-### Phase 2: Time Management & Itinerary Building
-*Focus: Converting the spatial route into a time-accurate schedule.*
+### Phase 2: Advanced Routing & Refinement
+*Focus: Enhancing the user's control over the spatial route.*
 
 | ID | Feature Area | Description | Priority |
 | :--- | :--- | :--- | :--- |
-| **FR-2.1** | **Trip Window** | Users shall input a "Start Time" and "End Time" (e.g., 9:00 AM - 5:00 PM) for their day. | **Critical** |
-| **FR-2.2** | **Auto-Distribution** | The system shall automatically calculate specific stay durations by averaging available time (Total Window - Travel Time) across all POIs. | **Critical** |
-| **FR-2.3** | **Min Duration Alert** | If the auto-distributed stay time is < 1 hour per POI, the system shall alert the user that the schedule is too crowded. | **Critical** |
-| **FR-2.4** | **Manual Override** | Users shall be able to manually override the auto-calculated stay time for specific locations. | **High** |
-| **FR-2.5** | **Timeline Gen** | The system shall generate a detailed timeline (Arrive -> Stay -> Depart -> Travel). | **Critical** |
-| **FR-2.6** | **Smart Re-optimization** | Users shall be able to trigger a "Clean Path" optimization that uses their current manual sequence as a starting point and applies local improvements (2-opt) without drastically changing the order. | **High** |
-| **FR-2.7** | **Region Selector** | Users shall be able to select a destination region/city (e.g., Banff, Tokyo, Paris) which sets the initial map center and biases address search results to that area. | **High** |
+| **FR-2.1** | **Stop Locking** | Users shall be able to **"Lock"** specific POIs in their sequence. The system shall re-optimize the remaining *unlocked* POIs to minimize travel time while respecting the fixed positions of locked stops. | **High** |
+| **FR-2.2** | **Region Selector** | Users shall be able to select a destination region/city (e.g., Banff, Tokyo, Paris) which sets the initial map center and biases address search results to that area. | **High** |
 
 ### Phase 3: Multi-Region & Grand Strategy (Post-MVP)
 *Focus: Scaling the local solution into a cross-regional journey.*
@@ -92,7 +86,7 @@ The **GeoRoute Optimizer** is a spatial decision-support tool designed to elimin
 7.  **Route Output**:
     *   Map draws the optimized route line (closing the loop or ending path based on mode).
     *   Sidebar slides out with a **"Placeline"** showing sequence, travel times, and distances.
-8.  **Refinement**: User drags a POI or reorders stops; route recalculates in real-time.
+8.  **Refinement**: User manually reorders stops or **Locks** specific locations (e.g., Lunch) and re-optimizes the remaining path.
 
 ## 7. Success Metrics (KPIs)
 *   **Time-to-Plan**: 50% reduction in planning time compared to manual Google Maps usage.
@@ -100,5 +94,6 @@ The **GeoRoute Optimizer** is a spatial decision-support tool designed to elimin
 *   **User Sentiment**: "Buy Me a Coffee" click-through rate > 2%.
 
 ## 8. Future Roadmap
-*   **Phase 4**: Real-time traffic integration and seasonal road closures.
-*   **Phase 5**: Collaborative planning (multi-user session syncing).
+*   **Phase 4**: City & Transit Mode (Public Transport routing, walking paths, specific transit schedules).
+*   **Phase 5**: Real-time traffic integration and seasonal road closures.
+*   **Phase 6**: Collaborative planning (multi-user session syncing).
