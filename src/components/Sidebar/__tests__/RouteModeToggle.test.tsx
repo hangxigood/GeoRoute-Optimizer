@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import RouteModeToggle from '../RouteModeToggle';
 import { useStore } from '@/store/useStore';
 
@@ -14,7 +14,7 @@ describe('RouteModeToggle', () => {
     });
 
     it('renders correctly for loop mode', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             routeMode: 'loop',
             setRouteMode: mockSetRouteMode
         });
@@ -24,7 +24,7 @@ describe('RouteModeToggle', () => {
     });
 
     it('renders correctly for one-way mode', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             routeMode: 'one-way',
             setRouteMode: mockSetRouteMode
         });
@@ -34,7 +34,7 @@ describe('RouteModeToggle', () => {
     });
 
     it('toggles mode when clicked (loop -> one-way)', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             routeMode: 'loop',
             setRouteMode: mockSetRouteMode
         });
@@ -48,7 +48,7 @@ describe('RouteModeToggle', () => {
     });
 
     it('toggles mode when clicked (one-way -> loop)', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             routeMode: 'one-way',
             setRouteMode: mockSetRouteMode
         });

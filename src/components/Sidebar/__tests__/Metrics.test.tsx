@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import Metrics from '../Metrics';
 import { useStore } from '@/store/useStore';
 
@@ -14,7 +14,7 @@ describe('Metrics', () => {
     });
 
     it('renders nothing when no data', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             route: null,
             routeMetrics: null,
             lodgingZone: null,
@@ -26,7 +26,7 @@ describe('Metrics', () => {
     });
 
     it('renders route metrics when available', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             route: { routeMode: 'loop' },
             routeMetrics: {
                 totalDistanceKm: 10.5,
@@ -45,7 +45,7 @@ describe('Metrics', () => {
     });
 
     it('renders lodging zone when available', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             route: null,
             routeMetrics: null,
             lodgingZone: {
@@ -66,7 +66,7 @@ describe('Metrics', () => {
 
     it('renders formatted duration correctly', () => {
         // 45 mins -> 45min
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             route: { routeMode: 'one-way' },
             routeMetrics: {
                 totalDistanceKm: 5,

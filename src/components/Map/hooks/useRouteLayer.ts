@@ -6,7 +6,6 @@ import RouteParameters from '@arcgis/core/rest/support/RouteParameters';
 import FeatureSet from '@arcgis/core/rest/support/FeatureSet';
 import Graphic from '@arcgis/core/Graphic';
 import Point from '@arcgis/core/geometry/Point';
-import Polyline from '@arcgis/core/geometry/Polyline';
 import RouteSolveResult from '@arcgis/core/rest/support/RouteSolveResult';
 import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol';
 import { useStore } from '@/store/useStore';

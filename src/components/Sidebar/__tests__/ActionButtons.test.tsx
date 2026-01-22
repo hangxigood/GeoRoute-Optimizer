@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import ActionButtons from '../ActionButtons';
 import { useStore } from '@/store/useStore';
 
@@ -19,7 +19,7 @@ describe('ActionButtons', () => {
     });
 
     it('enables Find Stay button when valid conditions met', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             points: [
                 { id: '1', lat: 0, lng: 0 },
                 { id: '2', lat: 1, lng: 1 }
@@ -45,7 +45,7 @@ describe('ActionButtons', () => {
     });
 
     it('disables Find Stay button when conditions not met', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             points: [{ id: '1', lat: 0, lng: 0 }], // Only 1 point
             startLocation: null,
             isLoading: false,
@@ -65,7 +65,7 @@ describe('ActionButtons', () => {
     });
 
     it('enables Optimize button when valid conditions met', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             points: [{ id: '1', lat: 0, lng: 0 }],
             startLocation: null,
             isLoading: false,
@@ -88,7 +88,7 @@ describe('ActionButtons', () => {
     });
 
     it('disables all buttons when loading', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             points: [
                 { id: '1', lat: 0, lng: 0 },
                 { id: '2', lat: 1, lng: 1 }
@@ -111,7 +111,7 @@ describe('ActionButtons', () => {
     });
 
     it('shows Clear All button when items exist', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             points: [{ id: '1', lat: 0, lng: 0 }],
             startLocation: null,
             isLoading: false,

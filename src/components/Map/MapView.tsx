@@ -25,7 +25,7 @@ export function MapViewComponent({ onMapReady }: MapViewComponentProps) {
 
     // Expose map view to window for E2E testing
     if (typeof window !== 'undefined' && viewRef.current) {
-        (window as any).__arcgisMapView = viewRef.current;
+        (window as Window & { __arcgisMapView?: MapViewClass }).__arcgisMapView = viewRef.current;
     }
 
     // Handle map click to add POI

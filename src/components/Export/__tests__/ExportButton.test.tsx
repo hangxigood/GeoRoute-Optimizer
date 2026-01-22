@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import ExportButton from '../ExportButton';
 import { useStore } from '@/store/useStore';
 import { api } from '@/services/api';
@@ -15,9 +15,18 @@ vi.mock('@/services/api', () => ({
     }
 }));
 
+interface MockMapView {
+    takeScreenshot: Mock;
+    map: {
+        layers: {
+            find: Mock;
+        };
+    };
+    goTo: Mock;
+}
+
 describe('ExportButton', () => {
-    const mockSetIsLoading = vi.fn();
-    const mockMapView = {
+    const mockMapView: MockMapView = {
         takeScreenshot: vi.fn().mockResolvedValue({ dataUrl: 'data:image/png;base64,mock' }),
         map: {
             layers: {
@@ -32,7 +41,7 @@ describe('ExportButton', () => {
     });
 
     it('renders disabled when no route', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             route: null,
             points: [{ id: '1', lat: 0, lng: 0 }],
             startLocation: null,
@@ -40,38 +49,38 @@ describe('ExportButton', () => {
             isLoading: false
         });
 
-        render(<ExportButton mapView={mockMapView as any} />);
+        render(<ExportButton mapView={mockMapView as unknown as __esri.MapView} />);
 
         const button = screen.getByRole('button', { name: /export itinerary/i });
         expect(button).toBeDisabled();
     });
 
     it('renders enabled when route exists', () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             route: { sequence: [] },
             points: [{ id: '1', lat: 0, lng: 0 }],
             isLoading: false
         });
 
-        render(<ExportButton mapView={mockMapView as any} />);
+        render(<ExportButton mapView={mockMapView as unknown as __esri.MapView} />);
 
         const button = screen.getByRole('button', { name: /export itinerary/i });
         expect(button).toBeEnabled();
     });
 
     it('handles export process', async () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             route: { sequence: [] },
             points: [{ id: '1', lat: 0, lng: 0 }],
             isLoading: false
         });
 
-        (api.export.exportPdf as any).mockResolvedValue(new Blob(['pdf content']));
+        (api.export.exportPdf as Mock).mockResolvedValue(new Blob(['pdf content']));
 
         global.URL.createObjectURL = vi.fn(() => 'blob:url');
         global.URL.revokeObjectURL = vi.fn();
 
-        render(<ExportButton mapView={mockMapView as any} />);
+        render(<ExportButton mapView={mockMapView as unknown as __esri.MapView} />);
 
         const button = screen.getByRole('button', { name: /export itinerary/i });
         fireEvent.click(button);
@@ -88,15 +97,15 @@ describe('ExportButton', () => {
     });
 
     it('handles API error', async () => {
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             route: { sequence: [] },
             points: [{ id: '1', lat: 0, lng: 0 }],
             isLoading: false
         });
 
-        (api.export.exportPdf as any).mockRejectedValue(new Error('API Error'));
+        (api.export.exportPdf as Mock).mockRejectedValue(new Error('API Error'));
 
-        render(<ExportButton mapView={mockMapView as any} />);
+        render(<ExportButton mapView={mockMapView as unknown as __esri.MapView} />);
         const button = screen.getByRole('button', { name: /export itinerary/i });
         fireEvent.click(button);
 

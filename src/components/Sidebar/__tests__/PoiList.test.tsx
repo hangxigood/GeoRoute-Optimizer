@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import PoiList from '../PoiList';
 import { useStore } from '@/store/useStore';
 
@@ -8,12 +8,12 @@ import { useStore } from '@/store/useStore';
 vi.mock('@/store/useStore');
 vi.mock('framer-motion', () => ({
     Reorder: {
-        Group: ({ children, onReorder }: any) => (
+        Group: ({ children }: { children: React.ReactNode; onReorder?: (newOrder: unknown[]) => void }) => (
             <div data-testid="reorder-group">
                 {children}
             </div>
         ),
-        Item: ({ children, value }: any) => (
+        Item: ({ children, value }: { children: React.ReactNode; value: { id: string } }) => (
             <div data-testid={`reorder-item-${value.id}`}>
                 {children}
             </div>
@@ -47,7 +47,7 @@ describe('PoiList', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (useStore as any).mockReturnValue(mockStore);
+        (useStore as unknown as Mock).mockReturnValue(mockStore);
     });
 
     it('renders list of points', () => {
@@ -91,7 +91,7 @@ describe('PoiList', () => {
 
     it('renders start location section when set', () => {
         const startLocationMock = { id: 'start', name: 'Start Point', lat: 0, lng: 0 };
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             ...mockStore,
             startLocation: startLocationMock,
         });
@@ -104,7 +104,7 @@ describe('PoiList', () => {
 
     it('handles clearing start location', () => {
         const startLocationMock = { id: 'start', name: 'Start Point', lat: 0, lng: 0 };
-        (useStore as any).mockReturnValue({
+        (useStore as unknown as Mock).mockReturnValue({
             ...mockStore,
             startLocation: startLocationMock,
         });
