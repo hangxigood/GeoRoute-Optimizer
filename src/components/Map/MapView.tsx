@@ -23,6 +23,11 @@ export function MapViewComponent({ onMapReady }: MapViewComponentProps) {
     // Initialize map and layers
     const { viewRef, layersRef } = useMapInitialization(mapDiv, onMapReady);
 
+    // Expose map view to window for E2E testing
+    if (typeof window !== 'undefined' && viewRef.current) {
+        (window as any).__arcgisMapView = viewRef.current;
+    }
+
     // Handle map click to add POI
     useMapClickHandler(viewRef, points.length, addPoint);
 
